@@ -1,0 +1,18 @@
+---
+import type { Variant } from '../data/plan';
+
+interface Props {
+	id: string;
+	title: string;
+	/** 标题右侧的灰色补充说明 */
+	note: string;
+	variant?: Variant;
+}
+
+const { id, title, note, variant = 'a' } = Astro.props;
+const variantClass = variant === 'a' ? '' : ` ${variant}`;
+---
+
+<div class={`section-title${variantClass}`} id={id}>
+	<span class="bar"></span><h2>{title}</h2><small>{note}</small>
+</div>

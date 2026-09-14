@@ -1,0 +1,53 @@
+---
+import type { Exercise, Variant } from '../data/plan';
+
+interface Props extends Exercise {}
+
+const { code, name, tag, load, steps, cues, pitfalls, figure, variant } = Astro.props;
+
+const STROKE: Record<Variant, string> = { a: '#ff6b35', b: '#2ec4b6', c: '#4c6ef5' };
+const variantClass = variant === 'a' ? '' : ` ${variant}`;
+---
+
+<details class={`ex-card${variantClass}`}>
+	<summary>
+		<span class="ex-num">{code}</span>
+		<span class="ex-name">{name}</span>
+		<span class="ex-tag">{tag}</span>
+		<span class="arrow">▼</span>
+	</summary>
+	<div class="ex-body">
+		<div class="ex-fig">
+			<svg
+				viewBox="0 0 100 100"
+				fill="none"
+				stroke={STROKE[variant]}
+				stroke-width="3.5"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				set:html={figure}
+			></svg>
+			<div class="ex-weight" set:html={load.join('<br>')}></div>
+		</div>
+		<div class="ex-steps">
+			<h4>怎么做</h4>
+			<ol>
+				{steps.map((step) => <li>{step}</li>)}
+			</ol>
+		</div>
+	</div>
+	<div class="ex-tips">
+		<div class="tip-col ok">
+			<h5>✅ 要点</h5>
+			<ul>
+				{cues.map((cue) => <li>{cue}</li>)}
+			</ul>
+		</div>
+		<div class="tip-col no">
+			<h5>⚠️ 避坑</h5>
+			<ul>
+				{pitfalls.map((item) => <li>{item}</li>)}
+			</ul>
+		</div>
+	</div>
+</details>
