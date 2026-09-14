@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url;
 ---
 
 <!doctype html>
@@ -18,8 +19,10 @@ const { title, description } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		<meta name="theme-color" content="#1a1a2e" />
 		<title>{title}</title>
+		<link rel="canonical" href={canonical} />
 		{description && <meta name="description" content={description} />}
 		<meta property="og:type" content="website" />
+		<meta property="og:url" content={canonical} />
 		<meta property="og:title" content={title} />
 		{description && <meta property="og:description" content={description} />}
 		<meta property="og:locale" content="zh_CN" />
