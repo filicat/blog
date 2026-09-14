@@ -1,247 +1,98 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import SectionTitle from '../components/SectionTitle.astro';
-import ExerciseCard from '../components/ExerciseCard.astro';
-import { warmup, trainingA, trainingB, cardio } from '../data/plan';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const day = (d: Date) => d.toISOString().slice(0, 10);
 ---
 
-<Layout title="哑铃减脂完整计划 · 172cm 72kg 零基础" description="男 · 29 岁 · 172cm / 72kg · 零基础 · 极小空间 · 一对可调哑铃（总重 30kg）。含饮食方案、热身、训练 A / B、小空间有氧、一周安排、重量对照与进度追踪。">
-  <div class="wrap">
-    <nav class="toc">
-      <a href="#top">顶部</a>
-      <a href="#s1">饮食</a>
-      <a href="#s2">热身</a>
-      <a href="#s3">训练A</a>
-      <a href="#s4">训练B</a>
-      <a href="#s5">有氧</a>
-      <a href="#s6">周安排</a>
-      <a href="#s7">重量</a>
-      <a href="#s8">进度</a>
-      <button id="tgl" type="button">全部展开</button>
-    </nav>
-    <div class="hero" id="top">
-      <h1>哑铃减脂完整计划</h1>
-      <p>男 · 29岁 · 172cm / 72kg · 零基础 · 极小空间 · 一对可调哑铃（总重 30kg）</p>
-      <div class="stats">
-        <div class="stat"><b>24.3</b><span>BMI 超重边缘</span></div>
-        <div class="stat"><b>65-68<span style="font-size:12px">kg</span></b><span>目标体重</span></div>
-        <div class="stat"><b>1650</b><span>每日 kcal</span></div>
-        <div class="stat"><b>3<span style="font-size:12px">次</span></b><span>每周训练</span></div>
-      </div>
-    </div>
-    <div class="rules">
-      <h3>📌 通用原则（每个动作都适用）</h3>
-      <div class="rules-grid">
-        <div class="rule-item"><b>🐢 动作慢</b>下放 2 秒，推起 / 拉起 1 秒</div>
-        <div class="rule-item"><b>🌬️ 不憋气</b>用力时呼气，还原时吸气</div>
-        <div class="rule-item"><b>🛑 疼就停</b>酸胀正常，关节刺痛立刻停</div>
-        <div class="rule-item"><b>⚖️ 重量标准</b>标准做 12 次，最后 2 次有点吃力</div>
-      </div>
-    </div>
-    <SectionTitle id="s1" title="一、饮食" note="TDEE ≈ 2000 kcal" />
-    <details class="card">
-      <summary>
-      <h2><span class="dot"></span>每日热量与营养<small>制造 300-500 kcal 缺口</small></h2>
-      </summary>
-      <div class="kcal-flex">
-        <div class="donut">
-          <div class="donut-txt"><b>1650</b><span>kcal / 天</span></div>
-        </div>
-        <div class="macro-list">
-          <div class="macro">
-            <span class="swatch" style="background:var(--orange)"></span>
-            蛋白质 <span style="color:var(--gray);font-size:12px">31%</span>
-            <span class="val">130g</span><span class="gram">×4kcal</span>
-          </div>
-          <div class="macro">
-            <span class="swatch" style="background:var(--teal)"></span>
-            脂肪 <span style="color:var(--gray);font-size:12px">30%</span>
-            <span class="val">55g</span><span class="gram">×9kcal</span>
-          </div>
-          <div class="macro">
-            <span class="swatch" style="background:var(--blue)"></span>
-            碳水 <span style="color:var(--gray);font-size:12px">39%</span>
-            <span class="val">160g</span><span class="gram">×4kcal</span>
-          </div>
-        </div>
-      </div>
-      <div class="meals">
-        <div class="meal">
-          <h4>早餐 <em>约 400</em></h4>
-          <p>鸡蛋 2 个<br>燕麦 40g<br>牛奶 / 无糖酸奶 250ml</p>
-        </div>
-        <div class="meal">
-          <h4>午餐 <em>约 550</em></h4>
-          <p>米饭 1 拳<br>鸡胸 / 瘦牛肉 150g<br>蔬菜 2 拳</p>
-        </div>
-        <div class="meal">
-          <h4>晚餐 <em>约 500</em></h4>
-          <p>红薯 / 玉米 1 拳<br>鱼 / 豆腐 150g<br>蔬菜 2 拳</p>
-        </div>
-        <div class="meal">
-          <h4>加餐 <em>约 200</em></h4>
-          <p>无糖酸奶 150g<br>或 水果 1 个</p>
-        </div>
-      </div>
-      <div class="hint red">
-        <b>必须戒掉：</b>奶茶、含糖饮料、油炸、甜点、夜宵、酒。烹饪油每天 20-30g。
-      </div>
-    </details>
-    <details class="card">
-      <summary>
-      <h2><span class="dot"></span>下班后时间安排<small>先吃饭后运动 · 完全可行</small></h2>
-      </summary>
-      <div class="timeline">
-        <div class="tl-item">
-          <div class="t">17:30 - 17:50</div>
-          <div class="x">食堂吃饭，<b>七分饱，别吃撑</b>。主食一拳、蛋白一掌、蔬菜两拳，避开油炸和勾芡。</div>
-        </div>
-        <div class="tl-item">
-          <div class="t">17:50 - 18:10</div>
-          <div class="x">慢走或散步 20 分钟，别马上坐下或躺下。</div>
-        </div>
-        <div class="tl-item">
-          <div class="t">18:10 - 18:30</div>
-          <div class="x">休息、换衣服、热身（原地踏步 2 分钟 + 肩绕环 + 徒手深蹲 10 个 + 臀桥 10 个，每个动作的做法见下面第二节热身）。</div>
-        </div>
-        <div class="tl-item">
-          <div class="t">18:30 - 19:15</div>
-          <div class="x">哑铃训练（A 或 B）+ 有氧 10 分钟。</div>
-        </div>
-        <div class="tl-item">
-          <div class="t">19:15 之后</div>
-          <div class="x">如果饿，加餐：无糖酸奶 / 牛奶 / 水煮蛋 / 水果。</div>
-        </div>
-      </div>
-      <div class="hint blue">
-        <b>吃太饱怎么办？</b>饭后 1-1.5 小时再练力量。如果只能马上练，先做上肢和核心（卧推、划船、侧平举、死虫、鸟狗、平板支撑），<b>深蹲、硬拉、臀桥放饭后 1 小时</b>。胃胀、反酸、岔气立刻停，改成散步。
-      </div>
-      <div class="hint">
-        <b>记住：</b>减脂看的是全天总热量缺口，先吃后练或先练后吃，效果没差别。先吃后练力气更足，不容易低血糖。
-      </div>
-    </details>
-    <SectionTitle id="s2" title="二、热身" note="练前 5 分钟 · 4 个动作按顺序做完" />
+<Layout
+	title="训练与减脂笔记"
+	description="哑铃减脂完整计划（172cm / 72kg 零基础，含饮食方案、热身、训练 A/B、小空间有氧、一周安排、重量对照、进度追踪），以及后续的博客文章。"
+>
+	<div class="wrap">
+		<div class="hero">
+			<h1>训练与减脂笔记</h1>
+			<p>哑铃减脂完整计划，以及后续的博客文章</p>
+		</div>
 
-  {warmup.map((exercise) => <ExerciseCard {...exercise} />)}
+		<a class="entry" href="/plan/">
+			<span class="tag">计划</span>
+			<h2>哑铃减脂完整计划</h2>
+			<p>男 · 29岁 · 172cm / 72kg · 零基础 · 极小空间 · 一对可调哑铃（总重 30kg）</p>
+			<span class="more">饮食方案 · 热身 · 训练 A/B · 小空间有氧 · 一周安排 · 重量对照 · 进度追踪 →</span>
+		</a>
 
-    <SectionTitle id="s3" title="三、训练 A" note="推 + 腿 + 核心 · 每周 3 次隔天练" />
-
-  {trainingA.map((exercise) => <ExerciseCard {...exercise} />)}
-
-    <SectionTitle id="s4" title="四、训练 B" note="拉 + 腿后 + 肩 + 核心" variant="b" />
-
-  {trainingB.map((exercise) => <ExerciseCard {...exercise} />)}
-
-    <SectionTitle id="s5" title="五、小空间有氧" note="训练日 10 分钟 · 有氧日 20-30 分钟 · 零跑跳" variant="c" />
-    <details class="card" style="padding:20px 24px;">
-      <summary>
-      <h2><span class="dot"></span>有氧怎么练<small>每轮 3 分钟 · 微喘但能说话</small></h2>
-      </summary>
-      <p style="font-size:14px;color:#4b5563;margin-bottom:16px;">
-        每轮 <b>3 分钟</b>（原地踏步 1 分钟 + 其余 4 个动作各 30 秒）。<br>
-        <b>训练日做 3 轮（约 10 分钟）；只练有氧的日子做 6-10 轮（20-30 分钟）。</b><br>
-        强度标准：<b>微喘但还能说话</b>。可以拆成几次做，每次 5 分钟也有效。点开下面每个动作看详解。
-      </p>
-      <div class="circuit">
-        <div>原地踏步<span>1 分钟</span></div>
-        <div>小幅度提膝<span>30 秒</span></div>
-        <div>原地出拳<span>30 秒</span></div>
-        <div>侧点步<span>30 秒</span></div>
-        <div>后踢腿<span>30 秒</span></div>
-      </div>
-    </details>
-
-  {cardio.map((exercise) => <ExerciseCard {...exercise} />)}
-
-    <SectionTitle id="s6" title="六、一周安排" note="下一周 A / B 对调" />
-    <details class="card">
-      <summary>
-      <h2><span class="dot"></span>训练周历<small>训练日 30-45 分钟 · 有氧日 20-30 分钟</small></h2>
-      </summary>
-      <div class="week">
-        <div class="day train"><div class="d">周一</div><div class="c">训练A<br>+有氧10min</div></div>
-        <div class="day cardio"><div class="d">周二</div><div class="c">有氧<br>20min</div></div>
-        <div class="day train"><div class="d">周三</div><div class="c">训练B<br>+有氧10min</div></div>
-        <div class="day rest"><div class="d">周四</div><div class="c">休息<br>碎片踏步</div></div>
-        <div class="day train"><div class="d">周五</div><div class="c">训练A<br>+有氧10min</div></div>
-        <div class="day cardio"><div class="d">周六</div><div class="c">有氧<br>20-30min</div></div>
-        <div class="day rest"><div class="d">周日</div><div class="c">休息</div></div>
-      </div>
-      <div class="hint">
-        <b>组数与次数：</b>力量动作第 1 周 2 组、第 2 周起 3 组，每组 12 次；组间休息 60-90 秒。<br>
-        <b>计时动作例外：</b>死虫、鸟狗左右各 12 次 × 2-3 组；平板支撑 20-40 秒 × 2-3 组；提膝/出拳 30 秒 × 4 组。
-      </div>
-    </details>
-    <SectionTitle id="s7" title="七、重量对照表" note="每只 15kg 可调" />
-    <details class="card">
-      <summary>
-      <h2><span class="dot"></span>每个动作该用多重<small>标准做 12 次，最后 2 次有点吃力</small></h2>
-      </summary>
-      <table>
-        <tr><th>动作</th><th>建议重量</th><th>说明</th></tr>
-        <tr><td>高脚杯深蹲</td><td><b>10-15kg</b></td><td>双手捧一只哑铃</td></tr>
-        <tr><td>罗马尼亚硬拉</td><td><b>每只 10-15kg</b></td><td>背挺直，屈髋</td></tr>
-        <tr><td>俯身划船</td><td><b>每只 10-15kg</b></td><td>单臂做更稳</td></tr>
-        <tr><td>地板卧推</td><td><b>每只 5-10kg</b></td><td>先轻后重</td></tr>
-        <tr><td>臀桥</td><td><b>10-15kg</b></td><td>哑铃压髋部</td></tr>
-        <tr><td>站姿推举</td><td><b>每只 5-8kg</b></td><td>不要用 15kg</td></tr>
-        <tr><td>侧平举</td><td><b>每只 2-5kg</b></td><td>太重会借力</td></tr>
-        <tr><td>死虫 / 鸟狗 / 平板</td><td><b>无重量</b></td><td>靠自重</td></tr>
-        <tr><td>有氧 5 个动作</td><td><b>无重量</b></td><td>靠节奏和时长</td></tr>
-      </table>
-      <div class="hint red">
-        <b>安全提醒：</b>动作要慢，不要憋气，疼就停。有膝、腰、心脏、血压问题请先咨询医生。局部减脂不存在，别只练手臂。
-      </div>
-    </details>
-    <SectionTitle id="s8" title="八、进度与预期" note="每周固定早上空腹称 1-2 次" />
-    <details class="card">
-      <summary>
-      <h2><span class="dot"></span>体重目标<small>看 7 天平均，不被单日波动影响</small></h2>
-      </summary>
-      <div class="pb-row">
-        <div class="lbl"><span>当前体重</span><b>72 kg</b></div>
-        <div class="bar"><i style="width:0%"></i></div>
-      </div>
-      <div class="pb-row">
-        <div class="lbl"><span>目标体重</span><b>65-68 kg</b></div>
-        <div class="bar"><i class="teal" style="width:100%"></i></div>
-      </div>
-      <div style="font-size:14px;color:#4b5563;margin-top:6px;">
-        · 合理速度：<b>每周减 0.5-1kg</b>，一个月 2-4kg<br>
-        · <b>腰围比体重更重要</b>，每周量一次<br>
-        · 两周不掉秤：主食减 1/4，或每天加 10 分钟有氧
-      </div>
-      <div class="hint">
-        <b>记住：</b>哑铃负责保肌肉、塑形，减脂靠热量缺口 + 日常活动。能坚持比练多狠更重要。
-      </div>
-    </details>
-
-    <footer>
-      <b>练前必看：</b>第一次先空手做 10 次找感觉，再拿哑铃。<br>
-      力量动作 2-3 组 × 12 次，组间休息 60-90 秒 · 动作质量 &gt; 重量<br>
-      疼就停，有膝 / 腰 / 心脏 / 血压问题请先咨询医生
-    </footer>
-  </div>
-
-  <script>
-    const details = document.querySelectorAll('details');
-    const toggle = document.getElementById('tgl');
-
-    function syncToggle() {
-      if (toggle) toggle.textContent = document.querySelectorAll('details:not([open])').length ? '全部展开' : '全部收起';
-    }
-
-    toggle?.addEventListener('click', () => {
-      const open = document.querySelectorAll('details:not([open])').length > 0;
-      details.forEach((detail) => { detail.open = open; });
-      syncToggle();
-    });
-
-    document.addEventListener('toggle', syncToggle, true);
-    syncToggle();
-
-    window.addEventListener('beforeprint', () => {
-      details.forEach((detail) => { detail.open = true; });
-    });
-  </script>
+		{posts.length > 0 && (
+			<section>
+				<h2 class="list">文章</h2>
+				{posts.map((post) => (
+					<a class="entry" href={`/blog/${post.id}/`}>
+						<time datetime={day(post.data.date)}>{day(post.data.date)}</time>
+						<h3>{post.data.title}</h3>
+						<p>{post.data.description}</p>
+					</a>
+				))}
+			</section>
+		)}
+	</div>
 </Layout>
+
+<style>
+	.entry {
+		display: block;
+		background: var(--card);
+		border-radius: 18px;
+		padding: 22px 24px;
+		margin-bottom: 20px;
+		box-shadow: 0 2px 12px rgba(26, 26, 46, 0.06);
+		border-top: 4px solid var(--orange);
+		text-decoration: none;
+		color: inherit;
+	}
+	.entry:active {
+		opacity: 0.85;
+	}
+	.entry h2 {
+		font-size: 19px;
+		margin: 8px 0 6px;
+	}
+	.entry h3 {
+		font-size: 17px;
+		margin: 6px 0;
+		line-height: 1.45;
+	}
+	.entry p {
+		font-size: 13.5px;
+		color: #4b5563;
+	}
+	.entry time {
+		font-size: 12px;
+		color: var(--gray);
+	}
+	.entry .tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 600;
+		background: var(--orange-soft);
+		color: #c2410c;
+		border-radius: 20px;
+		padding: 3px 11px;
+	}
+	.entry .more {
+		display: block;
+		margin-top: 10px;
+		font-size: 12px;
+		color: var(--gray);
+	}
+	.list {
+		font-size: 14px;
+		font-weight: 600;
+		letter-spacing: 0.5px;
+		color: var(--gray);
+		margin: 30px 0 14px;
+		padding-left: 4px;
+	}
+</style>

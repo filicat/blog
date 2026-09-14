@@ -1,0 +1,55 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/prose.css';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('blog');
+	return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const date = post.data.date.toISOString().slice(0, 10);
+---
+
+<Layout title={`${post.data.title} · 训练与减脂笔记`} description={post.data.description}>
+	<div class="wrap">
+		<a class="back" href="/">← 首页</a>
+		<article class="card prose">
+			<h1>{post.data.title}</h1>
+			<p class="date"><time datetime={date}>{date}</time></p>
+			<Content />
+		</article>
+	</div>
+</Layout>
+
+<style>
+	.back {
+		display: inline-block;
+		font-size: 12px;
+		font-weight: 600;
+		color: #374151;
+		background: #fff;
+		border: 1px solid var(--line);
+		border-radius: 20px;
+		padding: 4px 12px;
+		text-decoration: none;
+		margin-bottom: 14px;
+		box-shadow: 0 1px 4px rgba(26, 26, 46, 0.05);
+	}
+	.prose {
+		padding: 26px 28px;
+	}
+	.prose h1 {
+		font-size: 23px;
+		line-height: 1.45;
+	}
+	.prose .date {
+		font-size: 12px;
+		color: var(--gray);
+		margin-top: 8px;
+		padding-bottom: 14px;
+		border-bottom: 1px solid var(--line);
+	}
+</style>
