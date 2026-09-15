@@ -30,7 +30,8 @@
 | `src/plan-theme.ts` | **plan 页配色的唯一来源**：构建期从每个主题的 31 个 `--theme-*` 解算出一整套 `--plan-*`（面/墨/6 个角色色/英雄区渐变），导出 `planThemeCss()`，由 `plan.astro` 内联。见「约定与红线」 |
 | `src/styles/global.css` | 主题全局样式：Tailwind v4 `@theme`（`--theme-*` → `--color-accent` 等）、字体栈、`@view-transition`、`.prose` 正文排版 |
 | `src/styles/plan.css` | plan 页组件样式表（版式 + 角色化颜色别名）。**只准用 `--plan-*`/`--theme-*`，不写字面颜色** |
-| `src/components/` | 主题组件（Header/Footer/PostPreview/PostInfo/TableOfContents/Tags/Search/SelectTheme/…）+ 本站原有的 `ExerciseCard.astro`、`SectionTitle.astro` |
+| `src/components/` | 主题组件（Header/Footer/PostPreview/PostInfo/TableOfContents/ScrollUpButton/Tags/Search/SelectTheme/…）+ 本站原有的 `ExerciseCard.astro`、`SectionTitle.astro`、`MobileToc.astro`（<1280px 的浮动目录按钮 + 底部抽屉） |
+| `src/scripts/` | 客户端渐进增强模块（非组件）：`scroll-affordance.ts`（浮动控件的 `hidden`↔过渡切换 + 两个显隐判据）、`toc-highlight.ts`（目录滚动高亮）。被 `TableOfContents`、`ScrollUpButton`、`MobileToc` 共享 |
 | `src/plugins/` | remark/rehype 插件：description、reading-time、directive、admonitions、unknown-directives、gemoji、math、pixelated、title-figure |
 | `src/utils.ts` | `getSortedPosts`（过滤 draft）、`dateString`、`resolveThemeColorStyles`、Tags/Series 分组 |
 | `src/data/notes-plan.ts` | 笔记路线图（12 章 / 104 篇，对齐 D1–D14）。「目录结构」以这个文件为准（空目录 git 不追踪） |
@@ -145,6 +146,10 @@
     `/home/lhf/.omp/puppeteer/chrome/linux-*/chrome-linux64/chrome --headless=new --no-sandbox --remote-debugging-port=9333 --user-data-dir=/tmp/cleanprof about:blank`
     然后 `browser.open({ app: { cdp_url: 'http://127.0.0.1:9333' } })`。此浏览器里 Ctrl+K → `泛型` 应得到 `找到 2 个 泛型 的相关结果`（8 个链接，首条 href `/notes/01-Java基础/01-泛型/01-从getClass说起/`），无匹配词应得到 `未找到 … 的相关结果`
 - **路由自检**（`curl -H 'Cache-Control: no-cache'`）：`/` 200、`/notes/` 200、`/notes/01-Java基础/01-泛型/01-从getClass说起/` 200（中文路径百分号编码）、`/plan/` 200 且 HTML 里**含**内联的 `--plan-*` 变量与主题 `:root[data-theme=…]` 块、`/rss.xml` 与 `/robots.txt` 200、`/social-cards/__default.png` 200 且 `content-type: image/png`、`/blog` 301 → `/`、`/foo` 404 且返回自定义 404 页
+- **移动端目录（改 `MobileToc` / `TableOfContents` / `ScrollUpButton` / `src/scripts/` 后必跑）**：390×780 下顶部 `.toc-fab` 不可见 → 滚到 `details.toc` 块滚出视口后可见（44px 命中区，与右下角 `> button.scroll-up` 不重叠；`md` 52px）→ 点击开抽屉（`drawer.hidden === false`、`html` 加 `overflow-hidden`、焦点在 `.toc-panel`、滚轮不动页面）→ 点目录项跳锚点（目标标题 `rect.top === 0`）、抽屉关、`html` 解锁、**焦点不回按钮**（否则视口被拽回）→ `Escape` / 遮罩 / 关闭按钮都能关且焦点还回按钮 → 视口拉宽到 1280 必须自动关并解锁（否则页面卡住不能滚）。1280/1440 断言 `.toc-fab`、`.toc-drawer` 不可见、`details.toc` 仍 `sticky`/274px。关 JS 断言 `.toc-fab`、`.toc-drawer` 都是 `display:none` 且 `details.toc` 正常展开
+  - ⚠️ 判定"浮动控件是否可见"要用 `element.checkVisibility({ checkOpacity: true })`：`xl:hidden` 是父级 `display:none`，子元素的 `getComputedStyle().display` 仍是它自己声明的值
+  - ⚠️ `observeProseEnteringTop` 的 `rootMargin: '0px 0px -95% 0px'` 是"视口顶部 5% 窄带"，回调真值 = `entry.isIntersecting`（**不是**取反）；别凭直觉写 `!isIntersecting`
+  - ⚠️ 目录锚点形如 `#31-能写什么`，以数字开头，**不能** `querySelector(href)`（探针里要 `getElementById(href.slice(1))`）；站点自身只用 `offsetTop` 与原生锚点跳转，不受影响
 - ⚠️ `tab.run` 不捕获外层闭包（要 `JSON.stringify` 内插或整个定义在 run 内）；每个 URL 新开 tab 并 await 自己的 run
 - ⚠️ 本地删掉 markdown 后重建，`.astro/` 缓存可能仍含已删条目。`rm -rf .astro dist` 再 build（CI 全新克隆不受影响）
 
@@ -152,6 +157,7 @@
 
 - 路由：`/`（首页两张入口卡 + 最近更新）、`/notes/`（目录与进度）、`/notes/<章>/<节>/<篇>/`（详情）、`/plan/`（哑铃减脂计划，主题原生页）、`/rss.xml`、`/robots.txt`、`/social-cards/*.png`、`/404`
 - plan 页：20 套配色全跟随（含深浅模式），打印固定浅色；颜色由 `src/plan-theme.ts` 构建期解算，产物 = 每主题一组 `--plan-*` 内联在 `/plan/` 的 HTML 里
-- 笔记：路线图 12 章 / 104 篇，已写 2 篇（`01-Java基础/01-泛型/01-从getClass说起`、`01-Java基础/01-泛型/02-擦除之后`）。进度由 `/notes/` 构建期实时统计
+- 笔记：路线图 12 章 / 104 篇，已写 3 篇（`01-Java基础/01-泛型/01-从getClass说起`、`…/02-擦除之后`、`…/03-通配符与PECS`）。进度由 `/notes/` 构建期实时统计
+- 笔记目录：**≥1280px（Tailwind `xl`）** 用 `TableOfContents` 的 sticky 侧栏（`position: sticky; top: 40px`，宽 274px）；**<1280px** 侧栏退回文章顶部的普通块，同时由 `MobileToc` 提供左下角浮动按钮 + 底部抽屉（`xl:hidden`，`z-110`）。抽屉复用同一个 `TOCHeading` 组件（自带 `li.active-heading` 高亮），无 JS 时按钮与抽屉都停在 `hidden`
 - 文章（原 `blog` 集合）：0 篇，集合已删
 - 主题：20 套配色，默认 `catppuccin-mocha`，顶栏调色板按钮切换；其中 18 套带对比度 `overrides`（205 条）；搜索走 Pagefind（构建期索引），界面词条中文硬编码；无 JS 时搜索/配色按钮为 `disabled`，正文照常可读

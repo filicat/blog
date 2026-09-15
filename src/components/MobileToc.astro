@@ -1,0 +1,155 @@
+---
+import type { MarkdownHeading } from 'astro'
+import TOCHeading from '~/components/TableOfContentsHeading.astro'
+import IconList from '~/icons/list.svg'
+import IconClose from '~/icons/circle-x.svg'
+
+interface Props {
+  headings: MarkdownHeading[]
+}
+
+const { headings } = Astro.props
+
+// 与桌面侧栏同一份数据、同一套缩进标记（TableOfContentsHeading）
+const filteredHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
+---
+
+{
+  filteredHeadings.length > 0 && (
+    <div class="xl:hidden">
+      <button
+        type="button"
+        hidden
+        class="toc-fab size-11 md:size-12 lg:size-13 fixed left-3 bottom-3 md:left-5 md:bottom-5 lg:left-6 lg:bottom-6 z-100 flex items-center justify-center rounded-full bg-background border-2 border-accent/20 hover:bg-accent/10"
+        aria-controls="toc-drawer"
+        aria-expanded="false"
+        aria-label="打开目录"
+      >
+        <IconList class="text-accent size-6 lg:size-7" />
+      </button>
+
+      <div id="toc-drawer" hidden class="toc-drawer fixed inset-0 z-110">
+        <div class="toc-backdrop absolute inset-0 bg-foreground/40" data-toc-close />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="目录"
+          tabindex="-1"
+          class="toc-panel absolute inset-x-0 bottom-0 mx-auto max-w-md max-h-[80vh] flex flex-col rounded-t-xl border-t-3 border-accent/10 bg-background px-6 pt-5"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-accent before:content-['>'] before:mr-2"
+              >目录</span
+            >
+            <button
+              type="button"
+              data-toc-close
+              aria-label="关闭目录"
+              class="size-8 flex items-center justify-center rounded-full hover:bg-accent/10"
+            >
+              <IconClose class="text-accent size-5" />
+            </button>
+          </div>
+          <nav class="overflow-y-auto text-sm text-foreground pb-6">
+            <ul class="flex flex-col max-w-full">
+              {filteredHeadings.map((heading) => <TOCHeading heading={heading} />)}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  import { observeElementLeavesViewport, transitionHiddenElement } from '~/scripts/scroll-affordance'
+  import { initTocHighlight } from '~/scripts/toc-highlight'
+
+  const fab = document.querySelector<HTMLButtonElement>('.toc-fab')
+  const drawer = document.querySelector<HTMLElement>('.toc-drawer')
+  const panel = document.querySelector<HTMLElement>('.toc-panel')
+  const list = panel?.querySelector<HTMLElement>('nav ul')
+  // 文章顶部的目录块：它一滚出视口，就用浮动按钮顶上（此时侧栏/顶部目录都用不上了）
+  const inlineToc = document.querySelector('details.toc')
+
+  if (fab && drawer && panel && list) {
+    const fabControl = transitionHiddenElement(fab, 'opacity', 'active')
+    const drawerControl = transitionHiddenElement(drawer, 'opacity', 'active')
+    const isOpen = () => fab.getAttribute('aria-expanded') === 'true'
+
+    const close = (restoreFocus = true) => {
+      drawerControl.hide()
+      fab.setAttribute('aria-expanded', 'false')
+      document.documentElement.classList.remove('overflow-hidden')
+      if (restoreFocus) fab.focus()
+    }
+
+    const open = () => {
+      drawerControl.show()
+      fab.setAttribute('aria-expanded', 'true')
+      // 抽屉是固定定位的整体，锁住页面滚动，避免背景跟着滑
+      document.documentElement.classList.add('overflow-hidden')
+      panel.focus()
+      // 打开时把当前小节送到视线里（长目录在手机上翻不动）
+      requestAnimationFrame(() => {
+        list.querySelector('.active-heading')?.scrollIntoView({ block: 'center' })
+      })
+    }
+
+    fab.addEventListener('click', open)
+    drawer
+      .querySelectorAll('[data-toc-close]')
+      .forEach((el) => el.addEventListener('click', () => close()))
+    // 点目录项要顺着锚点跳走，焦点不能抢回按钮（否则视口会被拽回按钮处）
+    list.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => close(false)))
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) close()
+    })
+    // 跨过 xl 断点后改用桌面侧栏，抽屉必须收起来
+    matchMedia('(min-width: 1280px)').addEventListener('change', (e) => {
+      if (e.matches && isOpen()) close(false)
+    })
+
+    if (inlineToc) {
+      observeElementLeavesViewport(inlineToc, (left) => {
+        if (left) {
+          fabControl.show()
+        } else {
+          fabControl.hide()
+        }
+      })
+    }
+    initTocHighlight(list)
+  }
+</script>
+
+<style>
+  /* 浮动按钮：与「回到顶部」同一条淡入上移曲线 */
+  .toc-fab {
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 0.3s ease-in-out,
+      opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .toc-fab:not(.active) {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  /* 抽屉：遮罩淡入、面板上滑 */
+  .toc-drawer {
+    opacity: 1;
+    transition: opacity 0.25s ease-out;
+  }
+  .toc-drawer:not(.active) {
+    opacity: 0;
+  }
+  .toc-panel {
+    transform: translateY(0);
+    transition: transform 0.3s ease-in-out;
+  }
+  .toc-drawer:not(.active) .toc-panel {
+    transform: translateY(100%);
+  }
+</style>

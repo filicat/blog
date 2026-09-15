@@ -10,31 +10,7 @@ import IconChevronUp from '~/icons/chevron-up.svg'
 </button>
 
 <script>
-  function transitionHiddenElement(
-    element: HTMLElement,
-    transitionProperty: string,
-    transitionClass: string,
-  ) {
-    const listener = (e: TransitionEvent) => {
-      if (e.target === element && e.propertyName === transitionProperty) {
-        element.setAttribute('hidden', 'true')
-        element.removeEventListener('transitionend', listener)
-      }
-    }
-    return {
-      show() {
-        element.removeEventListener('transitionend', listener)
-        element.removeAttribute('hidden')
-        // Force a browser re-paint
-        const _reflow = element.offsetHeight
-        element.classList.add(transitionClass)
-      },
-      hide() {
-        element.addEventListener('transitionend', listener)
-        element.classList.remove(transitionClass)
-      },
-    }
-  }
+  import { observeProseEnteringTop, transitionHiddenElement } from '~/scripts/scroll-affordance'
 
   function init() {
     const button = document.querySelector('button.scroll-up') as HTMLButtonElement
@@ -56,20 +32,13 @@ import IconChevronUp from '~/icons/chevron-up.svg'
 
     const btnControl = transitionHiddenElement(button, 'opacity', 'active')
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            btnControl.show()
-          } else {
-            btnControl.hide()
-          }
-        })
-      },
-      // Only consider the top 5% of the viewport
-      { rootMargin: `0px 0px -95% 0px` },
-    )
-    observer.observe(prose)
+    observeProseEnteringTop(prose, (entered) => {
+      if (entered) {
+        btnControl.show()
+      } else {
+        btnControl.hide()
+      }
+    })
   }
 
   init()

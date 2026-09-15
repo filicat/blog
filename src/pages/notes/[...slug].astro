@@ -11,6 +11,7 @@ import PostPreview from '~/components/PostPreview.astro'
 import DividerText from '~/components/DividerText.astro'
 import { render } from 'astro:content'
 import TableOfContents from '~/components/TableOfContents.astro'
+import MobileToc from '~/components/MobileToc.astro'
 import { Image } from 'astro:assets'
 import GiscusLoader from '~/components/GiscusLoader.astro'
 import siteConfig from '~/site.config'
@@ -141,6 +142,10 @@ const crumbs = post.id.split('/')
         <GiscusLoader />
       </section>
     )
+  }
+  {
+    /* 移动端（<xl）用浮动按钮 + 底部抽屉；桌面由 TableOfContents 的 sticky 侧栏承担 */
+    postData.toc && headings.length > 0 && <MobileToc headings={headings} />
   }
   <ScrollUpButton />
 </Layout>
