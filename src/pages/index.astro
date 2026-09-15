@@ -10,12 +10,12 @@ const day = (d: Date) => d.toISOString().slice(0, 10);
 
 <Layout
 	title="训练与减脂笔记"
-	description="哑铃减脂完整计划（172cm / 72kg 零基础，含饮食方案、热身、训练 A/B、小空间有氧、一周安排、重量对照、进度追踪），以及后续的博客文章。"
+	description="哑铃减脂完整计划（172cm / 72kg 零基础，含饮食方案、热身、训练 A/B、小空间有氧、一周安排、重量对照、进度追踪），Java 面试笔记，以及后续的博客文章。"
 >
 	<div class="wrap">
 		<div class="hero">
 			<h1>训练与减脂笔记</h1>
-			<p>哑铃减脂完整计划，以及后续的博客文章</p>
+			<p>哑铃减脂完整计划、Java 面试笔记，以及后续的博客文章</p>
 		</div>
 
 		<a class="entry" href="/plan/">
@@ -23,6 +23,13 @@ const day = (d: Date) => d.toISOString().slice(0, 10);
 			<h2>哑铃减脂完整计划</h2>
 			<p>男 · 29岁 · 172cm / 72kg · 零基础 · 极小空间 · 一对可调哑铃（总重 30kg）</p>
 			<span class="more">饮食方案 · 热身 · 训练 A/B · 小空间有氧 · 一周安排 · 重量对照 · 进度追踪 →</span>
+		</a>
+
+		<a class="entry" href="/notes/">
+			<span class="tag">笔记</span>
+			<h2>Java 面试笔记</h2>
+			<p>按 P0 / P1 十四天复习计划组织的 Java 面试笔记，含章节目录与学习进度</p>
+			<span class="more">Java 基础 · 集合 · 并发 · Spring · MySQL · Redis · Kafka · JVM →</span>
 		</a>
 
 		{posts.length > 0 && (
