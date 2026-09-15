@@ -1,250 +1,196 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
-import { noteChapters } from '../../data/notes-plan';
+import Layout from '~/layouts/Layout.astro'
+import PageHeader from '~/components/PageHeader.astro'
+import { getCollection } from 'astro:content'
+import { noteChapters } from '~/data/notes-plan'
 
-const entries = await getCollection('notes');
-const byId = new Map(entries.map((e) => [e.id, e]));
-const day = (d: Date) => d.toISOString().slice(0, 10);
-const join = (...parts: string[]) => parts.filter(Boolean).join('/');
+const entries = await getCollection('notes')
+const byId = new Map(entries.map((e) => [e.id, e]))
+const day = (d: Date) => d.toISOString().slice(0, 10)
+const join = (...parts: string[]) => parts.filter(Boolean).join('/')
 
 interface Item {
-	label: string;
-	href: string | null;
-	date: string | null;
+  label: string
+  href: string | null
+  date: string | null
 }
 
 const chapters = noteChapters.map((ch) => {
-	const planned = ch.groups.flatMap((g) => g.planned.map((p) => join(g.dir, p)));
-	const plannedIds = new Set(planned.map((p) => join(ch.dir, p)));
+  const planned = ch.groups.flatMap((g) => g.planned.map((p) => join(g.dir, p)))
+  const plannedIds = new Set(planned.map((p) => join(ch.dir, p)))
 
-	const asItem = (id: string, label: string): Item => {
-		const entry = byId.get(id);
-		return { label, href: entry ? `/notes/${entry.id}/` : null, date: entry ? day(entry.data.date) : null };
-	};
+  const asItem = (id: string, label: string): Item => {
+    const entry = byId.get(id)
+    return {
+      label,
+      href: entry ? `/notes/${entry.id}/` : null,
+      date: entry ? day(entry.data.published) : null,
+    }
+  }
 
-	const groups = ch.groups.map((g) => ({
-		dir: g.dir,
-		items: g.planned.map((p) => asItem(join(ch.dir, g.dir, p), p)) as Item[],
-	}));
+  const groups = ch.groups.map((g) => ({
+    dir: g.dir,
+    items: g.planned.map((p) => asItem(join(ch.dir, g.dir, p), p)) as Item[],
+  }))
 
-	// 路线图之外已经写下的篇目（自己临时加的），也要显示出来
-	const extra = entries
-		.filter((e) => e.id.startsWith(`${ch.dir}/`) && !plannedIds.has(e.id))
-		.map((e) => ({ label: e.id.slice(ch.dir.length + 1), href: `/notes/${e.id}/`, date: day(e.data.date) }) as Item)
-		.sort((a, b) => a.label.localeCompare(b.label, 'zh'));
+  // 路线图之外已经写下的篇目（自己临时加的），也要显示出来
+  const extra = entries
+    .filter((e) => e.id.startsWith(`${ch.dir}/`) && !plannedIds.has(e.id))
+    .map(
+      (e) =>
+        ({
+          label: e.id.slice(ch.dir.length + 1),
+          href: `/notes/${e.id}/`,
+          date: day(e.data.published),
+        }) as Item,
+    )
+    .sort((a, b) => a.label.localeCompare(b.label, 'zh'))
 
-	const written = planned.filter((p) => byId.has(join(ch.dir, p))).length;
-	return { ...ch, groups, extra, written, total: planned.length };
-});
+  const written = planned.filter((p) => byId.has(join(ch.dir, p))).length
+  return { ...ch, groups, extra, written, total: planned.length }
+})
 
 // 不在路线图里的章（例如以后临时新建的目录）
-const knownDirs = new Set(noteChapters.map((ch) => ch.dir));
+const knownDirs = new Set(noteChapters.map((ch) => ch.dir))
 const orphans = entries
-	.filter((e) => !knownDirs.has(e.id.split('/')[0]))
-	.map((e) => ({ label: e.id, href: `/notes/${e.id}/`, date: day(e.data.date) }) as Item)
-	.sort((a, b) => a.label.localeCompare(b.label, 'zh'));
+  .filter((e) => !knownDirs.has(e.id.split('/')[0]))
+  .map(
+    (e) =>
+      ({
+        label: e.id,
+        href: `/notes/${e.id}/`,
+        date: day(e.data.published),
+      }) as Item,
+  )
+  .sort((a, b) => a.label.localeCompare(b.label, 'zh'))
 
-const totalWritten = chapters.reduce((n, c) => n + c.written, 0);
-const totalPlanned = chapters.reduce((n, c) => n + c.total, 0);
-const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 100);
+const totalWritten = chapters.reduce((n, c) => n + c.written, 0)
+const totalPlanned = chapters.reduce((n, c) => n + c.total, 0)
+const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 100)
+
+const stats = [
+  { value: String(totalWritten), label: '已写篇数' },
+  { value: String(totalPlanned), label: '路线图篇数' },
+  { value: `${pct}%`, label: '完成度' },
+  { value: '14', label: '计划天数' },
+]
 ---
 
 <Layout
-	title="Java 面试笔记 · 目录与进度"
-	description="按 P0 / P1 十四天复习计划组织的 Java 面试笔记：Java 基础、集合、并发、Spring、MySQL、Redis、Kafka、JVM 等，含章节目录与学习进度。"
+  title="Java 面试笔记 · 目录与进度"
+  description="按 P0 / P1 十四天复习计划组织的 Java 面试笔记：Java 基础、集合、并发、Spring、MySQL、Redis、Kafka、JVM 等，含章节目录与学习进度。"
 >
-	<div class="wrap">
-		<div class="hero">
-			<h1>Java 面试笔记</h1>
-			<p>章 — 节 — 篇 三级组织，与 P0 / P1 十四天复习计划对齐</p>
-			<div class="stats">
-				<div class="stat"><b>{totalWritten}</b><span>已写篇数</span></div>
-				<div class="stat"><b>{totalPlanned}</b><span>路线图篇数</span></div>
-				<div class="stat"><b>{pct}%</b><span>完成度</span></div>
-				<div class="stat"><b>14</b><span>计划天数</span></div>
-			</div>
-		</div>
+  <div class="max-w-full py-7.5">
+    <PageHeader title="Java 面试笔记" />
 
-		<p class="note">
-			路线图是长期目标，天次是它在 P0 / P1 计划里的推进位置；灰色篇目为待写，点标题进入正文。
-		</p>
+    <p class="my-5 text-base/7 text-foreground">
+      章 — 节 — 篇 三级组织，与 P0 / P1 十四天复习计划对齐。路线图是长期目标，天次是它在计划里的推进位置；
+      灰色篇目为待写，点标题进入正文。
+    </p>
 
-		{
-			chapters.map((ch) => (
-				<section class="card">
-					<h2>
-						<span class="day">{ch.day}</span>
-						{ch.dir}
-						<span class={`stage ${ch.stage === 'P0' ? 'p0' : 'p1'}`}>{ch.stage}</span>
-						<small>
-							已写 {ch.written} / {ch.total}
-						</small>
-					</h2>
-					<p class="goal">{ch.goal}</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6">
+      {
+        stats.map((s) => (
+          <div class="bg-accent/6 border-1 border-accent/20 rounded-xl px-3 py-4 text-center">
+            <b class="block text-2xl text-accent font-semibold">{s.value}</b>
+            <span class="text-xs text-foreground">{s.label}</span>
+          </div>
+        ))
+      }
+    </div>
 
-					{ch.groups.map((g) => (
-						<div class="group">
-							{g.dir && <h3>{g.dir}</h3>}
-							<ul>
-								{g.items.map((it) => (
-									<li>
-										{it.href ? (
-											<a href={it.href}>{it.label}</a>
-										) : (
-											<span class="todo">{it.label}</span>
-										)}
-									</li>
-								))}
-							</ul>
-						</div>
-					))}
+    <div class="flex flex-col gap-5">
+      {
+        chapters.map((ch) => (
+          <section class="bg-foreground/3 border-1 border-foreground/8 rounded-xl p-4 sm:p-5">
+            <h2 class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xl text-heading2 font-semibold">
+              <span class="shrink-0 rounded-lg border-1 border-accent/40 text-accent text-sm px-2 py-1">
+                {ch.day}
+              </span>
+              <span>{ch.dir}</span>
+              <span
+                class:list={[
+                  'shrink-0 rounded-lg text-xs px-2 py-1 border-1',
+                  ch.stage === 'P0'
+                    ? 'text-warning border-warning/40'
+                    : 'text-foreground border-foreground/20 bg-foreground/5',
+                ]}
+              >
+                {ch.stage}
+              </span>
+              <small class="ml-auto text-xs text-foreground font-normal">
+                已写 {ch.written} / {ch.total}
+              </small>
+            </h2>
+            <p class="mt-3 mb-4 text-sm/6 text-foreground">{ch.goal}</p>
 
-					{ch.extra.length > 0 && (
-						<div class="group">
-							<h3>路线图外</h3>
-							<ul>
-								{ch.extra.map((it) => (
-									<li>
-										<a href={it.href}>{it.label}</a>
-									</li>
-								))}
-							</ul>
-						</div>
-					)}
-				</section>
-			))
-		}
+            {ch.groups.map((g) => (
+              <div class="mt-4">
+                {g.dir && (
+                  <h3 class="mb-2 text-base text-heading3 font-semibold">{g.dir}</h3>
+                )}
+                <ul class="flex flex-col gap-1.5 pl-0.5">
+                  {g.items.map((it) => (
+                    <li class="text-sm/6">
+                      {it.href ? (
+                        <a class="text-link underline underline-offset-2" href={it.href}>
+                          {it.label}
+                          {it.date && (
+                            <span class="text-foreground ml-2">{it.date}</span>
+                          )}
+                        </a>
+                      ) : (
+                        <span class="text-foreground">{it.label}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
 
-		{
-			orphans.length > 0 && (
-				<section class="card">
-					<h2>
-						未归档
-						<span class="stage p1">临时</span>
-					</h2>
-					<p class="goal">不在路线图章目录下的笔记，建议移到对应章里。</p>
-					<ul>
-						{orphans.map((it) => (
-							<li>
-								<a href={it.href}>{it.label}</a>
-							</li>
-						))}
-					</ul>
-				</section>
-			)
-		}
-	</div>
+            {ch.extra.length > 0 && (
+              <div class="mt-4">
+                <h3 class="mb-2 text-base text-heading3 font-semibold">路线图外</h3>
+                <ul class="flex flex-col gap-1.5 pl-0.5">
+                  {ch.extra.map((it) => (
+                    <li class="text-sm/6">
+                      <a class="text-link underline underline-offset-2" href={it.href ?? '#'}>
+                        {it.label}
+                        {it.date && <span class="text-foreground ml-2">{it.date}</span>}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        ))
+      }
+
+      {
+        orphans.length > 0 && (
+          <section class="bg-foreground/3 border-1 border-foreground/8 rounded-xl p-4 sm:p-5">
+            <h2 class="flex items-center gap-3 text-xl text-heading2 font-semibold">
+              未归档
+              <span class="rounded-lg border-1 border-foreground/20 bg-foreground/5 text-foreground text-xs px-2 py-1">
+                临时
+              </span>
+            </h2>
+            <p class="mt-3 mb-4 text-sm/6 text-foreground">
+              不在路线图章目录下的笔记，建议移到对应章里。
+            </p>
+            <ul class="flex flex-col gap-1.5 pl-0.5">
+              {orphans.map((it) => (
+                <li class="text-sm/6">
+                  <a class="text-link underline underline-offset-2" href={it.href ?? '#'}>
+                    {it.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </div>
+  </div>
 </Layout>
-
-<style>
-	.note {
-		font-size: 12.5px;
-		color: var(--gray);
-		margin: -6px 0 18px;
-		padding-left: 4px;
-	}
-	.card h2 {
-		font-size: 20px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		flex-wrap: wrap;
-		padding-bottom: 12px;
-		border-bottom: 2px solid var(--line);
-	}
-	.card h2 small {
-		font-size: 12.5px;
-		font-weight: 400;
-		color: var(--gray);
-		margin-left: auto;
-	}
-	.day {
-		font-size: 11.5px;
-		font-weight: 600;
-		background: var(--blue-soft);
-		color: #3730a3;
-		border-radius: 20px;
-		padding: 2px 9px;
-	}
-	.stage {
-		font-size: 10.5px;
-		font-weight: 700;
-		border-radius: 20px;
-		padding: 2px 7px;
-	}
-	.stage.p0 {
-		background: var(--orange-soft);
-		color: #c2410c;
-	}
-	.stage.p1 {
-		background: var(--teal-soft);
-		color: #0f766e;
-	}
-	.goal {
-		font-size: 13.5px;
-		line-height: 1.7;
-		color: var(--ink-3);
-		margin: 12px 0 4px;
-	}
-	.group {
-		margin-top: 14px;
-	}
-	.group h3 {
-		font-size: 13.5px;
-		font-weight: 600;
-		color: var(--gray);
-		letter-spacing: 0.4px;
-		margin-bottom: 6px;
-	}
-	.group ul,
-	.card > ul {
-		list-style: none;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-	.group li,
-	.card > ul li {
-		margin: 0;
-	}
-	.group li a,
-	.group li .todo,
-	.card > ul li a {
-		display: inline-block;
-		font-size: 13.5px;
-		border-radius: 20px;
-		padding: 4px 12px;
-		text-decoration: none;
-		border: 1px solid var(--line);
-		transition:
-			background-color 0.16s ease,
-			border-color 0.16s ease,
-			color 0.16s ease;
-	}
-	.group li a,
-	.card > ul li a {
-		background: var(--chip-bg);
-		color: var(--chip-ink);
-		font-weight: 600;
-		box-shadow: var(--shadow-1);
-	}
-	@media (hover: hover) {
-		.group li a:hover,
-		.card > ul li a:hover {
-			background: var(--orange-soft);
-			border-color: var(--orange);
-			color: var(--link-ink);
-		}
-	}
-	.group li a:active,
-	.card > ul li a:active {
-		background: var(--orange-soft);
-		color: var(--link-ink);
-	}
-	.group li .todo {
-		background: var(--bg);
-		color: var(--ink-3);
-		border-style: dashed;
-	}
-</style>

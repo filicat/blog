@@ -1,182 +1,172 @@
 ---
-import '../styles/plan.css';
-import '../styles/theme.css';
+import '~/styles/global.css'
+import Header from '~/components/Header.astro'
+import Footer from '~/components/Footer.astro'
+import LightDarkAutoThemeLoader from '~/components/LightDarkAutoThemeLoader.astro'
+import SelectThemeLoader from '~/components/SelectThemeLoader.astro'
+import siteConfig from '~/site.config'
+import { pick, resolveThemeColorStyles } from '~/utils'
+import crypto from 'crypto'
 
 interface Props {
-	title: string;
-	description?: string;
-	noindex?: boolean;
-	/** 是否渲染站点导航；计划页传 false（那份 DOM 逐字移植，不能多一个元素） */
-	nav?: boolean;
+  title?: string
+  description?: string
+  tags?: string[]
+  author?: string
+  noindex?: boolean
 }
 
-const { title, description, noindex = false, nav = true } = Astro.props;
-const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url;
-const path = Astro.url.pathname;
-const navItems = [
-	{ href: '/plan/', label: '减脂计划' },
-	{ href: '/notes/', label: 'Java 笔记' },
-];
+const { title, description, tags, author, noindex } = Astro.props
+// trailingSlash: 'always'，canonical 就用带斜杠的原样 URL
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href
+const pageType = Astro.url.pathname.startsWith('/notes') ? 'article' : 'website'
+const pageTitle = title ? `${title} - ${siteConfig.title}` : siteConfig.title
+const pageDescription = description || siteConfig.description
+const pageAuthor = author || siteConfig.author
+// og:image 由 social-cards/[...slug].png.ts 生成：/notes/<id>/ -> /social-cards/<id>.png
+const pageImage =
+  pageType === 'article'
+    ? `${Astro.url.origin}${Astro.url.pathname
+        .replace(/^\/notes\//, '/social-cards/')
+        .replace(/\/+$/, '')}.png`
+    : `${Astro.url.origin}/social-cards/__default.png`
+const pageKeywords = [
+  ...new Set(siteConfig.tags.concat(tags || []).map((word) => word.toLowerCase())),
+].join(', ')
+const baseCssVars: { [key: string]: string } = {
+  'theme-font': siteConfig.font,
+  'ec-frm-frameBoxShdCssVal': 'none',
+  'ec-frm-edTabBrdRad': '0',
+  'ec-frm-edTabBarBrdCol':
+    'color-mix(in srgb, var(--theme-foreground), 10%, transparent)',
+  'ec-brdCol': 'color-mix(in srgb, var(--theme-foreground), 10%, transparent)',
+}
+
+let themeMode = siteConfig.themes.mode
+if (siteConfig.themes.include.length < 1) {
+  throw new Error('No themes defined in site.config. Please add at least one theme.')
+}
+if (themeMode === 'light-dark-auto' && siteConfig.themes.include.length < 2) {
+  console.warn(
+    'Theme mode "dark-light-auto" requires at least two themes. Defaulting to "single".',
+  )
+  themeMode = 'single'
+}
+let defaultTheme = siteConfig.themes.default || siteConfig.themes.include[0]
+let includedThemes = siteConfig.themes.include as string[]
+const themeNotIncluded = !includedThemes.includes(defaultTheme)
+if (
+  (themeMode !== 'light-dark-auto' && themeNotIncluded) ||
+  (themeMode === 'light-dark-auto' && defaultTheme !== 'auto' && themeNotIncluded)
+) {
+  console.warn(
+    `Default theme "${defaultTheme}" not found in themes. Using first theme: "${siteConfig.themes.include[0]}".`,
+  )
+  defaultTheme = siteConfig.themes.include[0]
+}
+let lightTheme = themeMode === 'light-dark-auto' ? includedThemes[0] : undefined
+let darkTheme = themeMode === 'light-dark-auto' ? includedThemes[1] : undefined
+
+// Generate a hash to use for cache busting the theme settings in localStorage.
+const themeHash = crypto
+  .createHash('md5')
+  .update(themeMode + defaultTheme + includedThemes.join(''))
+  .digest('hex')
+  .slice(0, 8) // Truncate to the first 8 characters
+
+const resolvedThemes = await resolveThemeColorStyles(
+  siteConfig.themes.include,
+  siteConfig.themes.overrides,
+)
+
+let cssLines: string[] = []
+for (const [themeId, themeStyles] of Object.entries(resolvedThemes)) {
+  const relevantStyles = pick(themeStyles, [
+    'foreground',
+    'background',
+    'accent',
+    'heading1',
+    'heading2',
+    'heading3',
+    'heading4',
+    'heading5',
+    'heading6',
+    'list',
+    'italic',
+    'link',
+    'separator',
+    'note',
+    'tip',
+    'important',
+    'caution',
+    'warning',
+    'blue',
+    'green',
+    'red',
+    'yellow',
+    'magenta',
+    'cyan',
+  ])
+  cssLines.push(`:root[data-theme="${themeId}"] {`)
+  for (const [key, value] of Object.entries(relevantStyles)) {
+    cssLines.push(`--theme-${key}: ${value};`)
+  }
+  cssLines.push(`}`)
+}
+let generatedCss: string = cssLines.join('\n')
 ---
 
 <!doctype html>
-<html lang="zh-CN">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<meta name="theme-color" content="#1a1a2e" />
-		<title>{title}</title>
-		{!noindex && <link rel="canonical" href={canonical} />}
-		{noindex && <meta name="robots" content="noindex" />}
-		{description && <meta name="description" content={description} />}
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content={canonical} />
-		<meta property="og:title" content={title} />
-		{description && <meta property="og:description" content={description} />}
-		<meta property="og:locale" content="zh_CN" />
-		<script is:inline>
-			// 首屏渲染前定主题，避免先亮后暗闪一下；localStorage 优先，其次系统偏好。
-			(() => {
-				let stored = null;
-				try {
-					stored = localStorage.getItem('theme');
-				} catch {}
-				const dark = stored
-					? stored === 'dark'
-					: matchMedia('(prefers-color-scheme: dark)').matches;
-				document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-				const meta = document.querySelector('meta[name="theme-color"]');
-				if (dark && meta) meta.setAttribute('content', '#0e1016');
-			})();
-		</script>
-	</head>
-	<body>
-		{
-			nav && (
-				<header class="site-nav">
-					<div class="site-nav-inner">
-						<a class="brand" href="/">
-							训练与减脂笔记
-						</a>
-						<nav class="site-nav-links" aria-label="站点">
-							{navItems.map((it) => (
-								<a
-									href={it.href}
-									aria-current={path.startsWith(it.href) ? 'page' : undefined}
-								>
-									{it.label}
-								</a>
-							))}
-						</nav>
-					</div>
-				</header>
-			)
-		}
-		{
-			!nav && (
-				<a class="home-float" href="/" aria-label="返回首页">
-					← 首页
-				</a>
-			)
-		}
-		<slot />
-		<button class="theme-toggle" type="button" aria-label="切换到深色主题" hidden>
-			<span class="ico" aria-hidden="true">◐</span><span class="label">深色</span>
-		</button>
-		<script>
-			const KEY = 'theme';
-			const root = document.documentElement;
-			const meta = document.querySelector('meta[name="theme-color"]');
-			const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
-
-			function paint(dark: boolean) {
-				root.dataset.theme = dark ? 'dark' : 'light';
-				meta?.setAttribute('content', dark ? '#0e1016' : '#f5f6fa');
-				if (!toggle) return;
-				toggle.querySelector('.label')!.textContent = dark ? '浅色' : '深色';
-				toggle.setAttribute(
-					'aria-label',
-					dark ? '切换到浅色主题' : '切换到深色主题',
-				);
-			}
-
-			function stored() {
-				try {
-					return localStorage.getItem(KEY);
-				} catch {
-					return null;
-				}
-			}
-
-			// 与 head 里的首屏脚本对齐后再亮出按钮：脚本不跑就没有按钮，也就没有假按钮
-			paint(root.dataset.theme === 'dark');
-			toggle?.removeAttribute('hidden');
-
-			toggle?.addEventListener('click', () => {
-				const dark = root.dataset.theme !== 'dark';
-				paint(dark);
-				try {
-					localStorage.setItem(KEY, dark ? 'dark' : 'light');
-				} catch {}
-			});
-
-			// 用户没手动选过 → 一直跟随系统
-			matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-				if (!stored()) paint(e.matches);
-			});
-
-			function legacyCopy(text: string) {
-				const ta = document.createElement('textarea');
-				ta.value = text;
-				ta.setAttribute('readonly', '');
-				ta.style.position = 'fixed';
-				ta.style.top = '-1000px';
-				document.body.append(ta);
-				ta.select();
-				let ok = false;
-				try {
-					ok = document.execCommand('copy');
-				} catch {}
-				ta.remove();
-				return ok;
-			}
-
-			// 代码复制：给每个 pre 包一层定位容器再挂按钮（pre 自己横向滚动，按钮不能在它里面）
-			for (const code of document.querySelectorAll('pre > code')) {
-				const pre = code.parentElement;
-				if (!pre || pre.closest('.code-block')) continue;
-				const box = document.createElement('div');
-				box.className = 'code-block';
-				pre.replaceWith(box);
-				box.append(pre);
-
-				const btn = document.createElement('button');
-				btn.type = 'button';
-				btn.className = 'copy-btn';
-				btn.textContent = '复制';
-				btn.setAttribute('aria-label', '复制这段代码');
-				let timer: ReturnType<typeof setTimeout>;
-				btn.addEventListener('click', async () => {
-					const text = code.textContent ?? '';
-					let ok: boolean;
-					try {
-						await navigator.clipboard.writeText(text);
-						ok = true;
-					} catch {
-						ok = legacyCopy(text);
-					}
-					btn.dataset.state = ok ? 'done' : 'fail';
-					btn.textContent = ok ? '已复制' : '复制失败';
-					clearTimeout(timer);
-					timer = setTimeout(() => {
-						delete btn.dataset.state;
-						btn.textContent = '复制';
-					}, 1600);
-				});
-				box.append(btn);
-			}
-		</script>
-	</body>
+<html
+  lang="zh-CN"
+  data-theme={defaultTheme}
+  data-dark-theme={darkTheme}
+  data-light-theme={lightTheme}
+  data-theme-mode={themeMode}
+  data-theme-hash={themeHash}
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="title" content={pageTitle} />
+    <meta name="description" content={pageDescription} />
+    <meta name="author" content={pageAuthor} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:type" content={pageType} />
+    {pageImage && <meta property="og:image" content={pageImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    {pageImage && <meta name="twitter:image" content={pageImage} />}
+    <meta name="keywords" content={pageKeywords} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={pageUrl} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={siteConfig.title}
+      href={new URL('rss.xml', Astro.site)}
+    />
+    <title>{pageTitle}</title>
+    <style is:global define:vars={baseCssVars}></style>
+    <style is:inline set:html={generatedCss}></style>
+    {themeMode === 'light-dark-auto' && <LightDarkAutoThemeLoader />}
+    {themeMode === 'select' && <SelectThemeLoader />}
+  </head>
+  <body class="w-full h-full m-0 bg-background text-foreground">
+    <div
+      class="flex flex-col max-w-3xl min-h-screen border-accent/10 m-auto p-3 sm:py-5 sm:px-6 md:py-10"
+    >
+      <Header />
+      <main class="flex flex-col py-1">
+        <slot />
+      </main>
+      <Footer />
+    </div>
+  </body>
 </html>

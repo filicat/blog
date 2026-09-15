@@ -1,7 +1,7 @@
 ---
 title: 从 getClass 说起：理解 Class 对象与泛型擦除
 description: 从 getClass() 切入，讲透 Class 对象、运行时真实类型与泛型擦除的边界，附可运行验证代码与 7 道面试问法。
-date: 2026-09-15
+published: 2026-09-15
 ---
 
 > 所属：Java 面试笔记 / 01-Java基础 / 01-泛型 ｜ 学习计划：D1

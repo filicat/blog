@@ -1,38 +1,146 @@
 ---
-import { getCollection, render } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
-import '../../styles/prose.css';
+import type { GetStaticPaths } from 'astro'
+import Layout from '~/layouts/Layout.astro'
+import {
+  SeriesGroup,
+  TagsGroup,
+  getPostSequenceContext,
+  getSortedPosts,
+} from '~/utils'
+import PostPreview from '~/components/PostPreview.astro'
+import DividerText from '~/components/DividerText.astro'
+import { render } from 'astro:content'
+import TableOfContents from '~/components/TableOfContents.astro'
+import { Image } from 'astro:assets'
+import GiscusLoader from '~/components/GiscusLoader.astro'
+import siteConfig from '~/site.config'
+import Tags from '~/components/Tags.astro'
+import PostInfo from '~/components/PostInfo.astro'
+import ScrollUpButton from '~/components/ScrollUpButton.astro'
+import type { Collation } from '~/types'
+import ChevronsRight from '~/icons/chevrons-right.svg'
 
-export async function getStaticPaths() {
-	const notes = await getCollection('notes');
-	return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+export const getStaticPaths = (async () => {
+  const posts = await getSortedPosts()
+  return posts.map((post) => {
+    const { prev, next } = getPostSequenceContext(post, posts)
+    return {
+      params: { slug: post.id },
+      props: { post, prev, next },
+    }
+  })
+}) satisfies GetStaticPaths
+
+const { post, prev, next } = Astro.props
+const postData = post.data
+const { headings, Content: PostContent } = await render(post)
+const sortedPosts = await getSortedPosts()
+
+// 同系列（frontmatter 的 series）里的下一篇
+let series: Collation<'notes'> | undefined
+let nextPostInSeries: (typeof sortedPosts)[number] | undefined
+if (postData.series) {
+  const seriesGroup = await SeriesGroup.build(sortedPosts)
+  series = seriesGroup.match(postData.series)
+  if (!series) {
+    throw new Error(`Series "${postData.series}" not found`)
+  }
+  nextPostInSeries = getPostSequenceContext(post, series.entries).next
+}
+const showSeries = series && series.entries.length > 1
+
+let tags: Collation<'notes'>[] | undefined
+if (postData.tags && postData.tags.length > 0) {
+  const tagsGroup = await TagsGroup.build(sortedPosts)
+  tags = tagsGroup.matchMany(postData.tags)
 }
 
-const { note } = Astro.props;
-const { Content } = await render(note);
-const date = note.data.date.toISOString().slice(0, 10);
-const trail = note.id.split('/');
+// 面包屑：笔记 id 就是「章/节/篇」路径
+const crumbs = post.id.split('/')
 ---
 
-<Layout title={`${note.data.title} · Java 面试笔记`} description={note.data.description}>
-	<div class="wrap reading">
-		<a class="back" href="/notes/">← 笔记目录</a>
-		<article class="card prose">
-			<h1>{note.data.title}</h1>
-			<p class="meta">
-				{trail.join(' / ')} · <time datetime={date}>{date}</time>
-			</p>
-			<Content />
-		</article>
-	</div>
+<Layout
+  title={postData.title}
+  description={postData.description}
+  author={postData.author}
+  tags={postData.tags}
+>
+  <article class="max-w-full py-7.5" data-pagefind-body>
+    {
+      postData.coverImage && (
+        <Image
+          priority
+          layout="constrained"
+          src={postData.coverImage.src}
+          alt={postData.coverImage.alt}
+          class="w-full rounded-xl mb-5"
+        />
+      )
+    }
+    <div class="md:mx-2">
+      <p class="mb-2 text-sm text-foreground">
+        <a class="underline" href="/notes/">笔记</a>
+        {
+          crumbs.slice(0, -1).map((part) => (
+            <span class="before:content-['/'] before:mx-1.5">{part}</span>
+          ))
+        }
+      </p>
+      <h1 id={post.id} class="mb-4 text-[1.75rem] text-heading1 font-semibold">
+        # {postData.title}
+      </h1>
+      <div class="my-2 border-l-2 border-accent/80 pl-4 py-2">
+        <PostInfo post={post} class="mb-1" />
+        {
+          tags && (
+            <div class="mt-4">
+              <Tags tags={tags} />
+            </div>
+          )
+        }
+      </div>
+    </div>
+    <div class="flex flex-col xl:gap-1 2xl:gap-18 xl:flex-row xl:items-start">
+      {postData.toc && headings.length > 0 && <TableOfContents headings={headings} />}
+      <div class="mb-5 xl:min-w-full 2xl:min-w-full prose">
+        <PostContent />
+      </div>
+    </div>
+  </article>
+  {
+    nextPostInSeries && (
+      <a
+        href={`/notes/${nextPostInSeries.id}/`}
+        class="button justify-center -mt-8 mb-8 !whitespace-normal text-center flex gap-2 sm:gap-3 items-center"
+      >
+        <span>下一篇：{nextPostInSeries.data.title}</span>
+        <ChevronsRight class="size-5 hidden sm:block" />
+      </a>
+    )
+  }
+  {
+    showSeries && series ? (
+      <section>
+        <DividerText text={`${series.title} 系列`} />
+        {series.entries.map((seriesPost) => (
+          <PostPreview post={seriesPost} />
+        ))}
+      </section>
+    ) : prev || next ? (
+      <section>
+        <DividerText text="相邻笔记" />
+        {prev && <PostPreview post={prev} />}
+        {next && <PostPreview post={next} />}
+      </section>
+    ) : null
+  }
+  {
+    siteConfig.giscus && (
+      <section>
+        <DividerText text="评论" />
+        <GiscusLoader />
+      </section>
+    )
+  }
+  <ScrollUpButton />
 </Layout>
-
-<style>
-	.prose .meta {
-		font-size: 12.5px;
-		color: var(--gray);
-		margin-top: 10px;
-		padding-bottom: 14px;
-		border-bottom: 1px solid var(--line);
-	}
-</style>
