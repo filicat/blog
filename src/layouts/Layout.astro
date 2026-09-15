@@ -6,10 +6,17 @@ interface Props {
 	title: string;
 	description?: string;
 	noindex?: boolean;
+	/** 是否渲染站点导航；计划页传 false（那份 DOM 逐字移植，不能多一个元素） */
+	nav?: boolean;
 }
 
-const { title, description, noindex = false } = Astro.props;
+const { title, description, noindex = false, nav = true } = Astro.props;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url;
+const path = Astro.url.pathname;
+const navItems = [
+	{ href: '/plan/', label: '减脂计划' },
+	{ href: '/notes/', label: 'Java 笔记' },
+];
 ---
 
 <!doctype html>
@@ -46,6 +53,34 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.u
 		</script>
 	</head>
 	<body>
+		{
+			nav && (
+				<header class="site-nav">
+					<div class="site-nav-inner">
+						<a class="brand" href="/">
+							训练与减脂笔记
+						</a>
+						<nav class="site-nav-links" aria-label="站点">
+							{navItems.map((it) => (
+								<a
+									href={it.href}
+									aria-current={path.startsWith(it.href) ? 'page' : undefined}
+								>
+									{it.label}
+								</a>
+							))}
+						</nav>
+					</div>
+				</header>
+			)
+		}
+		{
+			!nav && (
+				<a class="home-float" href="/" aria-label="返回首页">
+					← 首页
+				</a>
+			)
+		}
 		<slot />
 		<button class="theme-toggle" type="button" aria-label="切换到深色主题" hidden>
 			<span class="ico" aria-hidden="true">◐</span><span class="label">深色</span>

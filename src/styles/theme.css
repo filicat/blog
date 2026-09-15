@@ -35,6 +35,17 @@
 	--day-rest-bg: #f3f4f6;
 	--day-rest-ink: #9ca3af;
 	/* 代码块底、行内代码底不在这里定义：代码块底由 Shiki 内联给出 */
+
+	/* 正文/组件字体栈：plan.css 的 body 字体不动，计划页要保持逐字原样 */
+	--font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC",
+		"Source Han Sans SC", "Microsoft YaHei", sans-serif;
+	/* 阴影三档：静置、卡片、悬浮 */
+	--shadow-1: 0 1px 4px rgba(26, 26, 46, 0.05);
+	--shadow-2: 0 2px 12px rgba(26, 26, 46, 0.06);
+	--shadow-3: 0 10px 26px rgba(26, 26, 46, 0.12);
+	/* 站点导航条 */
+	--nav-bg: rgba(245, 246, 250, 0.88);
+	--nav-ink: #374151;
 	color-scheme: light;
 }
 
@@ -75,6 +86,12 @@ html[data-theme='dark'] {
 	--day-cardio-ink: #63e0d2;
 	--day-rest-bg: #1b1f27;
 	--day-rest-ink: #8b93a5;
+
+	--shadow-1: 0 1px 4px rgba(0, 0, 0, 0.5);
+	--shadow-2: 0 2px 12px rgba(0, 0, 0, 0.45);
+	--shadow-3: 0 10px 26px rgba(0, 0, 0, 0.6);
+	--nav-bg: rgba(14, 16, 22, 0.88);
+	--nav-ink: #cfd6e4;
 	color-scheme: dark;
 }
 
@@ -82,8 +99,7 @@ html[data-theme='dark'] {
 html[data-theme='dark'] .toc {
 	background: var(--toc-bg);
 }
-html[data-theme='dark'] .toc a,
-html[data-theme='dark'] .back {
+html[data-theme='dark'] .toc a {
 	background: var(--chip-bg);
 	color: var(--chip-ink);
 }
@@ -99,8 +115,7 @@ html[data-theme='dark'] .rule-item,
 html[data-theme='dark'] .meal p,
 html[data-theme='dark'] .ex-steps ol li,
 html[data-theme='dark'] .tip-col ul li,
-html[data-theme='dark'] .tl-item .x,
-html[data-theme='dark'] .prose h4 {
+html[data-theme='dark'] .tl-item .x {
 	color: var(--ink-3);
 }
 html[data-theme='dark'] .rule-item b {
@@ -166,15 +181,6 @@ html[data-theme='dark'] details.ex-card.b .ex-weight {
 }
 html[data-theme='dark'] details.ex-card.c .ex-weight {
 	color: var(--blue);
-}
-html[data-theme='dark'] .prose a {
-	color: var(--link-ink);
-}
-html[data-theme='dark'] .prose blockquote {
-	color: var(--quote-ink);
-}
-html[data-theme='dark'] .prose code {
-	background: var(--surface-3);
 }
 html[data-theme='dark'] details.ex-card > summary:hover {
 	background: var(--surface-2);
@@ -256,15 +262,120 @@ html[data-theme='dark'] details.ex-card > summary:hover {
 	border-color: rgba(255, 150, 150, 0.55);
 	color: #ffe3e3;
 }
+/* 站点导航：sticky 顶栏。负外边距抵消 plan.css 的 body padding，让底色铺到视口边缘。
+   计划页不渲染本导航（Layout 的 nav={false}），那份逐字移植的 DOM 一个元素都不能多 */
+.site-nav {
+	position: sticky;
+	top: 0;
+	z-index: 40;
+	margin: -16px -16px 18px;
+	background: var(--nav-bg);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border-bottom: 1px solid var(--line);
+}
+.site-nav-inner {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 9px 16px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.site-nav .brand {
+	font-family: var(--font-sans);
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+	color: var(--dark);
+	text-decoration: none;
+	margin-right: auto;
+}
+.site-nav-links {
+	display: flex;
+	gap: 4px;
+}
+.site-nav-links a {
+	font-family: var(--font-sans);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--nav-ink);
+	text-decoration: none;
+	padding: 5px 12px;
+	border-radius: 20px;
+	transition: background-color 0.16s ease, color 0.16s ease;
+}
+.site-nav-links a:hover {
+	background: var(--surface-3);
+	color: var(--dark);
+}
+.site-nav-links a[aria-current='page'] {
+	background: var(--orange-soft);
+	color: var(--link-ink);
+}
+@media (max-width: 640px) {
+	.site-nav {
+		margin: -10px -10px 14px;
+	}
+	.site-nav-inner {
+		padding: 8px 12px;
+		gap: 8px;
+	}
+	.site-nav .brand {
+		font-size: 13px;
+	}
+	.site-nav-links a {
+		font-size: 12.5px;
+		padding: 5px 10px;
+	}
+}
+
 @media (hover: none) {
 	.copy-btn {
 		opacity: 1;
 	}
 }
 
+/* 计划页的返回入口：Layout 在 nav={false} 时渲染，position:fixed 完全不参与文档流
+   （移植页的 rect / scrollHeight 因此不受影响），也不需要布局占位 */
+.home-float {
+	position: fixed;
+	left: 16px;
+	bottom: 16px;
+	z-index: 45;
+	font-family: var(--font-sans);
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 1;
+	color: var(--chip-ink);
+	background: var(--chip-bg);
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	padding: 9px 14px;
+	text-decoration: none;
+	box-shadow: var(--shadow-1);
+	transition: color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+@media (hover: hover) {
+	.home-float:hover {
+		color: var(--link-ink);
+		border-color: var(--orange);
+		box-shadow: var(--shadow-2);
+	}
+}
+@media (max-width: 640px) {
+	.home-float {
+		left: 10px;
+		bottom: 10px;
+		padding: 8px 12px;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.copy-btn,
-	.theme-toggle {
+	.theme-toggle,
+	.site-nav-links a,
+	.home-float {
 		transition: none;
 	}
 }
@@ -307,6 +418,11 @@ html[data-theme='dark'] details.ex-card > summary:hover {
 		--day-cardio-ink: #0f766e;
 		--day-rest-bg: #f3f4f6;
 		--day-rest-ink: #9ca3af;
+		--shadow-1: 0 1px 4px rgba(26, 26, 46, 0.05);
+		--shadow-2: 0 2px 12px rgba(26, 26, 46, 0.06);
+		--shadow-3: 0 10px 26px rgba(26, 26, 46, 0.12);
+		--nav-bg: rgba(245, 246, 250, 0.88);
+		--nav-ink: #374151;
 	}
 	html[data-theme='dark'] .ex-tag {
 		color: #c2410c;
@@ -318,7 +434,12 @@ html[data-theme='dark'] details.ex-card > summary:hover {
 		color: #3b4fd8;
 	}
 	.theme-toggle,
-	.copy-btn {
+	.copy-btn,
+	.site-nav,
+	.home-float {
 		display: none;
+	}
+	.wrap.reading {
+		max-width: none;
 	}
 }

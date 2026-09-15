@@ -55,11 +55,6 @@ const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 
 	description="按 P0 / P1 十四天复习计划组织的 Java 面试笔记：Java 基础、集合、并发、Spring、MySQL、Redis、Kafka、JVM 等，含章节目录与学习进度。"
 >
 	<div class="wrap">
-		<nav class="toc">
-			<a href="/">首页</a>
-			<a href="/plan/">减脂计划</a>
-		</nav>
-
 		<div class="hero">
 			<h1>Java 面试笔记</h1>
 			<p>章 — 节 — 篇 三级组织，与 P0 / P1 十四天复习计划对齐</p>
@@ -150,7 +145,7 @@ const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 
 		padding-left: 4px;
 	}
 	.card h2 {
-		font-size: 18px;
+		font-size: 20px;
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -159,7 +154,7 @@ const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 
 		border-bottom: 2px solid var(--line);
 	}
 	.card h2 small {
-		font-size: 12px;
+		font-size: 12.5px;
 		font-weight: 400;
 		color: var(--gray);
 		margin-left: auto;
@@ -187,19 +182,20 @@ const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 
 		color: #0f766e;
 	}
 	.goal {
-		font-size: 13px;
-		color: #4b5563;
+		font-size: 13.5px;
+		line-height: 1.7;
+		color: var(--ink-3);
 		margin: 12px 0 4px;
 	}
 	.group {
 		margin-top: 14px;
 	}
 	.group h3 {
-		font-size: 13px;
+		font-size: 13.5px;
 		font-weight: 600;
 		color: var(--gray);
 		letter-spacing: 0.4px;
-		margin-bottom: 4px;
+		margin-bottom: 6px;
 	}
 	.group ul,
 	.card > ul {
@@ -216,27 +212,39 @@ const pct = totalPlanned === 0 ? 0 : Math.round((totalWritten / totalPlanned) * 
 	.group li .todo,
 	.card > ul li a {
 		display: inline-block;
-		font-size: 13px;
+		font-size: 13.5px;
 		border-radius: 20px;
-		padding: 3px 11px;
+		padding: 4px 12px;
 		text-decoration: none;
 		border: 1px solid var(--line);
+		transition:
+			background-color 0.16s ease,
+			border-color 0.16s ease,
+			color 0.16s ease;
 	}
 	.group li a,
 	.card > ul li a {
-		background: #fff;
-		color: #374151;
+		background: var(--chip-bg);
+		color: var(--chip-ink);
 		font-weight: 600;
-		box-shadow: 0 1px 4px rgba(26, 26, 46, 0.05);
+		box-shadow: var(--shadow-1);
+	}
+	@media (hover: hover) {
+		.group li a:hover,
+		.card > ul li a:hover {
+			background: var(--orange-soft);
+			border-color: var(--orange);
+			color: var(--link-ink);
+		}
 	}
 	.group li a:active,
 	.card > ul li a:active {
 		background: var(--orange-soft);
-		color: #c2410c;
+		color: var(--link-ink);
 	}
 	.group li .todo {
-		background: #f5f6fa;
-		color: #9ca3af;
+		background: var(--bg);
+		color: var(--ink-3);
 		border-style: dashed;
 	}
 </style>

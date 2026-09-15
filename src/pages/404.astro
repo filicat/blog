@@ -20,6 +20,7 @@ import Layout from '../layouts/Layout.astro';
     justify-content: center;
     text-align: center;
     padding: 40px 24px;
+    font-family: var(--font-sans);
   }
   .code {
     font-size: 76px;
@@ -29,26 +30,41 @@ import Layout from '../layouts/Layout.astro';
     color: var(--orange);
   }
   h1 {
-    font-size: 22px;
+    font-size: 24px;
     margin-top: 14px;
   }
   .msg {
-    font-size: 14px;
-    color: var(--gray);
-    margin-top: 6px;
+    font-size: 14.5px;
+    color: var(--ink-3);
+    margin-top: 8px;
   }
   .home {
     margin-top: 24px;
     display: inline-block;
     background: var(--dark);
-    color: #fff;
+    color: var(--bg);
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
     border-radius: 20px;
     padding: 10px 22px;
+    box-shadow: var(--shadow-2);
+    transition:
+      transform 0.16s ease,
+      box-shadow 0.16s ease;
+  }
+  /* 反白胶囊在深色下靠 --dark 翻面，底色与文字都走变量，两种主题都过 AA */
+  @media (hover: hover) {
+    .home:hover {
+      box-shadow: var(--shadow-3);
+    }
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .home:hover {
+      transform: translateY(-2px);
+    }
   }
   .home:active {
-    background: var(--orange);
+    box-shadow: var(--shadow-1);
   }
 </style>

@@ -15,7 +15,7 @@ const trail = note.id.split('/');
 ---
 
 <Layout title={`${note.data.title} · Java 面试笔记`} description={note.data.description}>
-	<div class="wrap">
+	<div class="wrap reading">
 		<a class="back" href="/notes/">← 笔记目录</a>
 		<article class="card prose">
 			<h1>{note.data.title}</h1>
@@ -28,30 +28,10 @@ const trail = note.id.split('/');
 </Layout>
 
 <style>
-	.back {
-		display: inline-block;
-		font-size: 12px;
-		font-weight: 600;
-		color: #374151;
-		background: #fff;
-		border: 1px solid var(--line);
-		border-radius: 20px;
-		padding: 4px 12px;
-		text-decoration: none;
-		margin-bottom: 14px;
-		box-shadow: 0 1px 4px rgba(26, 26, 46, 0.05);
-	}
-	.prose {
-		padding: 26px 28px;
-	}
-	.prose h1 {
-		font-size: 23px;
-		line-height: 1.45;
-	}
 	.prose .meta {
-		font-size: 12px;
+		font-size: 12.5px;
 		color: var(--gray);
-		margin-top: 8px;
+		margin-top: 10px;
 		padding-bottom: 14px;
 		border-bottom: 1px solid var(--line);
 	}
