@@ -30,7 +30,7 @@ export const noteChapters: NoteChapter[] = [
 		stage: 'P0',
 		goal: 'Java 基础、OOP、泛型、反射、注解、异常、String 家族：后面所有章节的地基，也是最容易被追到细节的一块。',
 		groups: [
-			{ dir: '01-泛型', planned: ['01-从getClass说起', '02-类型擦除', '03-通配符与PECS', '04-泛型数组与桥方法'] },
+			{ dir: '01-泛型', planned: ['01-从getClass说起', '02-擦除之后', '03-通配符与PECS', '04-泛型在框架中的应用'] },
 			{ dir: '02-反射', planned: ['01-反射入门', '02-Class对象详解', '03-反射与泛型'] },
 			{ dir: '03-注解', planned: ['01-注解基础与自定义注解'] },
 			{ dir: '04-异常体系', planned: ['01-异常体系全貌', '02-finally与try-with-resources'] },
