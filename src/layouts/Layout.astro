@@ -1,5 +1,6 @@
 ---
 import '../styles/plan.css';
+import '../styles/theme.css';
 
 interface Props {
 	title: string;
@@ -28,8 +29,119 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.u
 		<meta property="og:title" content={title} />
 		{description && <meta property="og:description" content={description} />}
 		<meta property="og:locale" content="zh_CN" />
+		<script is:inline>
+			// 首屏渲染前定主题，避免先亮后暗闪一下；localStorage 优先，其次系统偏好。
+			(() => {
+				let stored = null;
+				try {
+					stored = localStorage.getItem('theme');
+				} catch {}
+				const dark = stored
+					? stored === 'dark'
+					: matchMedia('(prefers-color-scheme: dark)').matches;
+				document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+				const meta = document.querySelector('meta[name="theme-color"]');
+				if (dark && meta) meta.setAttribute('content', '#0e1016');
+			})();
+		</script>
 	</head>
 	<body>
 		<slot />
+		<button class="theme-toggle" type="button" aria-label="切换到深色主题" hidden>
+			<span class="ico" aria-hidden="true">◐</span><span class="label">深色</span>
+		</button>
+		<script>
+			const KEY = 'theme';
+			const root = document.documentElement;
+			const meta = document.querySelector('meta[name="theme-color"]');
+			const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+
+			function paint(dark: boolean) {
+				root.dataset.theme = dark ? 'dark' : 'light';
+				meta?.setAttribute('content', dark ? '#0e1016' : '#f5f6fa');
+				if (!toggle) return;
+				toggle.querySelector('.label')!.textContent = dark ? '浅色' : '深色';
+				toggle.setAttribute(
+					'aria-label',
+					dark ? '切换到浅色主题' : '切换到深色主题',
+				);
+			}
+
+			function stored() {
+				try {
+					return localStorage.getItem(KEY);
+				} catch {
+					return null;
+				}
+			}
+
+			// 与 head 里的首屏脚本对齐后再亮出按钮：脚本不跑就没有按钮，也就没有假按钮
+			paint(root.dataset.theme === 'dark');
+			toggle?.removeAttribute('hidden');
+
+			toggle?.addEventListener('click', () => {
+				const dark = root.dataset.theme !== 'dark';
+				paint(dark);
+				try {
+					localStorage.setItem(KEY, dark ? 'dark' : 'light');
+				} catch {}
+			});
+
+			// 用户没手动选过 → 一直跟随系统
+			matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+				if (!stored()) paint(e.matches);
+			});
+
+			function legacyCopy(text: string) {
+				const ta = document.createElement('textarea');
+				ta.value = text;
+				ta.setAttribute('readonly', '');
+				ta.style.position = 'fixed';
+				ta.style.top = '-1000px';
+				document.body.append(ta);
+				ta.select();
+				let ok = false;
+				try {
+					ok = document.execCommand('copy');
+				} catch {}
+				ta.remove();
+				return ok;
+			}
+
+			// 代码复制：给每个 pre 包一层定位容器再挂按钮（pre 自己横向滚动，按钮不能在它里面）
+			for (const code of document.querySelectorAll('pre > code')) {
+				const pre = code.parentElement;
+				if (!pre || pre.closest('.code-block')) continue;
+				const box = document.createElement('div');
+				box.className = 'code-block';
+				pre.replaceWith(box);
+				box.append(pre);
+
+				const btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'copy-btn';
+				btn.textContent = '复制';
+				btn.setAttribute('aria-label', '复制这段代码');
+				let timer: ReturnType<typeof setTimeout>;
+				btn.addEventListener('click', async () => {
+					const text = code.textContent ?? '';
+					let ok: boolean;
+					try {
+						await navigator.clipboard.writeText(text);
+						ok = true;
+					} catch {
+						ok = legacyCopy(text);
+					}
+					btn.dataset.state = ok ? 'done' : 'fail';
+					btn.textContent = ok ? '已复制' : '复制失败';
+					clearTimeout(timer);
+					timer = setTimeout(() => {
+						delete btn.dataset.state;
+						btn.textContent = '复制';
+					}, 1600);
+				});
+				box.append(btn);
+			}
+		</script>
 	</body>
 </html>

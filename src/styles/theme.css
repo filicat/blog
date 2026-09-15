@@ -1,0 +1,324 @@
+/*
+  全局主题层：在 plan.css 之上做两件事
+  1) 深色模式：<html data-theme="dark"> 时改写 plan.css 的 :root 变量，
+     并把 plan.css / prose.css 里写死的浅色面改成走下面的变量
+  2) 交互件样式：主题切换按钮、代码复制按钮
+
+  设计约束：
+  - 浅色是默认，且必须与改动前完全一致（计划页有一份 DOM 保真比对）
+  - 深色只通过变量生效，打印时变量回落成浅色，所以打印永远是浅色
+  - 切换/复制的脚本在 Layout.astro 里，按钮由脚本注入；脚本不跑也照样能读
+*/
+
+:root {
+	/* 浅色：plan.css 里写死的次级面色，收拢成变量 */
+	--surface-2: #fafbfd;
+	--surface-3: #f1f2f6;
+	--chip-bg: #ffffff;
+	--chip-ink: #374151;
+	--ink-3: #4b5563;
+	--toc-bg: rgba(245, 246, 250, 0.94);
+	--arrow-bg: #f0f1f6;
+	--track-bg: #eef0f5;
+	--hint-warn-bg: #fff8ed;
+	--hint-warn-ink: #7c4a03;
+	--hint-red-bg: #fff1f0;
+	--hint-red-ink: #8a1f22;
+	--hint-blue-bg: #eef2ff;
+	--hint-blue-ink: #3730a3;
+	--quote-ink: #7c2d12;
+	--link-ink: #c2410c;
+	--day-train-bg: #fff4ef;
+	--day-train-ink: #c2410c;
+	--day-cardio-bg: #eefbf9;
+	--day-cardio-ink: #0f766e;
+	--day-rest-bg: #f3f4f6;
+	--day-rest-ink: #9ca3af;
+	/* 代码块底、行内代码底不在这里定义：代码块底由 Shiki 内联给出 */
+	color-scheme: light;
+}
+
+html[data-theme='dark'] {
+	--orange: #ff7d4d;
+	--orange-soft: #2c1a12;
+	--teal: #35d0c0;
+	--teal-soft: #102523;
+	--blue: #7b93ff;
+	--blue-soft: #182036;
+	--dark: #e7e9f1;
+	--gray: #98a2b6;
+	--bg: #0e1016;
+	--card: #171a22;
+	--line: #2a2f3b;
+	--green: #4ade80;
+	--red: #f87171;
+
+	--surface-2: #1b1f27;
+	--surface-3: #232833;
+	--chip-bg: #1d2129;
+	--chip-ink: #cfd6e4;
+	--ink-3: #b6bfd0;
+	--toc-bg: rgba(14, 16, 22, 0.92);
+	--arrow-bg: #262b36;
+	--track-bg: #262b36;
+	--hint-warn-bg: #2a2213;
+	--hint-warn-ink: #f2cf92;
+	--hint-red-bg: #2a1416;
+	--hint-red-ink: #f6b3b5;
+	--hint-blue-bg: #171d33;
+	--hint-blue-ink: #b9c4ff;
+	--quote-ink: #f4d2b6;
+	--link-ink: #ff9a6b;
+	--day-train-bg: #2a1c14;
+	--day-train-ink: #ffb08a;
+	--day-cardio-bg: #102523;
+	--day-cardio-ink: #63e0d2;
+	--day-rest-bg: #1b1f27;
+	--day-rest-ink: #8b93a5;
+	color-scheme: dark;
+}
+
+/* 把计划页/正文里写死的浅色面改走变量（只在深色下生效） */
+html[data-theme='dark'] .toc {
+	background: var(--toc-bg);
+}
+html[data-theme='dark'] .toc a,
+html[data-theme='dark'] .back {
+	background: var(--chip-bg);
+	color: var(--chip-ink);
+}
+html[data-theme='dark'] .rule-item,
+html[data-theme='dark'] .meal,
+html[data-theme='dark'] .day,
+html[data-theme='dark'] .ex-tips,
+html[data-theme='dark'] .ex-fig svg,
+html[data-theme='dark'] th {
+	background: var(--surface-2);
+}
+html[data-theme='dark'] .rule-item,
+html[data-theme='dark'] .meal p,
+html[data-theme='dark'] .ex-steps ol li,
+html[data-theme='dark'] .tip-col ul li,
+html[data-theme='dark'] .tl-item .x,
+html[data-theme='dark'] .prose h4 {
+	color: var(--ink-3);
+}
+html[data-theme='dark'] .rule-item b {
+	color: var(--dark);
+}
+html[data-theme='dark'] .donut::before,
+html[data-theme='dark'] .tl-item::before {
+	background: var(--card);
+}
+html[data-theme='dark'] .arrow,
+html[data-theme='dark'] .ex-steps ol li::before {
+	background: var(--arrow-bg);
+}
+html[data-theme='dark'] .ex-steps ol li::before {
+	color: var(--dark);
+}
+html[data-theme='dark'] .bar {
+	background: var(--track-bg);
+}
+html[data-theme='dark'] .day.train {
+	background: var(--day-train-bg);
+	border-color: #4a2c1c;
+}
+html[data-theme='dark'] .day.train .c {
+	color: var(--day-train-ink);
+}
+html[data-theme='dark'] .day.cardio {
+	background: var(--day-cardio-bg);
+	border-color: #1d4a45;
+}
+html[data-theme='dark'] .day.cardio .c {
+	color: var(--day-cardio-ink);
+}
+html[data-theme='dark'] .day.rest {
+	background: var(--day-rest-bg);
+}
+html[data-theme='dark'] .day.rest .c {
+	color: var(--day-rest-ink);
+}
+html[data-theme='dark'] .hint {
+	background: var(--hint-warn-bg);
+	color: var(--hint-warn-ink);
+}
+html[data-theme='dark'] .hint.red {
+	background: var(--hint-red-bg);
+	color: var(--hint-red-ink);
+}
+html[data-theme='dark'] .hint.blue {
+	background: var(--hint-blue-bg);
+	color: var(--hint-blue-ink);
+}
+html[data-theme='dark'] .ex-tag {
+	color: #ffb193;
+}
+html[data-theme='dark'] details.ex-card.b .ex-tag {
+	color: #63e0d2;
+}
+html[data-theme='dark'] details.ex-card.c .ex-tag {
+	color: #aebcff;
+}
+html[data-theme='dark'] details.ex-card.b .ex-weight {
+	color: var(--teal);
+}
+html[data-theme='dark'] details.ex-card.c .ex-weight {
+	color: var(--blue);
+}
+html[data-theme='dark'] .prose a {
+	color: var(--link-ink);
+}
+html[data-theme='dark'] .prose blockquote {
+	color: var(--quote-ink);
+}
+html[data-theme='dark'] .prose code {
+	background: var(--surface-3);
+}
+html[data-theme='dark'] details.ex-card > summary:hover {
+	background: var(--surface-2);
+}
+
+/* 主题切换：右下角悬浮胶囊 */
+.theme-toggle {
+	position: fixed;
+	right: 16px;
+	bottom: 16px;
+	z-index: 60;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: var(--card);
+	color: var(--chip-ink);
+	border: 1px solid var(--line);
+	cursor: pointer;
+	box-shadow: 0 2px 10px rgba(26, 26, 46, 0.14);
+}
+.theme-toggle[hidden] {
+	display: none;
+}
+.theme-toggle:hover {
+	border-color: var(--orange);
+	color: var(--orange);
+}
+.theme-toggle .ico {
+	font-size: 13px;
+	line-height: 1;
+}
+
+/* 代码复制：pre 外包一层定位容器，按钮不随横向滚动跑掉 */
+.code-block {
+	position: relative;
+}
+.code-block > pre,
+.prose .code-block > pre {
+	padding-right: 66px;
+}
+.copy-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 2;
+	font-family: inherit;
+	font-size: 11.5px;
+	font-weight: 600;
+	padding: 4px 10px;
+	border-radius: 999px;
+	cursor: pointer;
+	background: rgba(255, 255, 255, 0.12);
+	color: #e8e8f2;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	opacity: 0.5;
+	transition: opacity 0.15s, background 0.15s;
+}
+.code-block:hover .copy-btn,
+.copy-btn:focus-visible {
+	opacity: 1;
+}
+.copy-btn:hover {
+	background: rgba(255, 255, 255, 0.24);
+}
+.copy-btn[data-state='done'] {
+	opacity: 1;
+	background: rgba(46, 196, 182, 0.3);
+	border-color: rgba(90, 226, 210, 0.55);
+	color: #d9fff8;
+}
+.copy-btn[data-state='fail'] {
+	opacity: 1;
+	background: rgba(229, 72, 77, 0.32);
+	border-color: rgba(255, 150, 150, 0.55);
+	color: #ffe3e3;
+}
+@media (hover: none) {
+	.copy-btn {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.copy-btn,
+	.theme-toggle {
+		transition: none;
+	}
+}
+
+/* 打印永远是浅色：把深色变量原样回落成 :root 的浅色值 */
+@media print {
+	html[data-theme='dark'] {
+		--orange: #ff6b35;
+		--orange-soft: #fff4ef;
+		--teal: #2ec4b6;
+		--teal-soft: #eefbf9;
+		--blue: #4c6ef5;
+		--blue-soft: #eef2ff;
+		--dark: #1a1a2e;
+		--gray: #6b7280;
+		--bg: #f5f6fa;
+		--card: #ffffff;
+		--line: #e8eaef;
+		--green: #16a34a;
+		--red: #e5484d;
+		--surface-2: #fafbfd;
+		--surface-3: #f1f2f6;
+		--chip-bg: #ffffff;
+		--chip-ink: #374151;
+		--ink-3: #4b5563;
+		--toc-bg: rgba(245, 246, 250, 0.94);
+		--arrow-bg: #f0f1f6;
+		--track-bg: #eef0f5;
+		--hint-warn-bg: #fff8ed;
+		--hint-warn-ink: #7c4a03;
+		--hint-red-bg: #fff1f0;
+		--hint-red-ink: #8a1f22;
+		--hint-blue-bg: #eef2ff;
+		--hint-blue-ink: #3730a3;
+		--quote-ink: #7c2d12;
+		--link-ink: #c2410c;
+		--day-train-bg: #fff4ef;
+		--day-train-ink: #c2410c;
+		--day-cardio-bg: #eefbf9;
+		--day-cardio-ink: #0f766e;
+		--day-rest-bg: #f3f4f6;
+		--day-rest-ink: #9ca3af;
+	}
+	html[data-theme='dark'] .ex-tag {
+		color: #c2410c;
+	}
+	html[data-theme='dark'] details.ex-card.b .ex-tag {
+		color: #0f766e;
+	}
+	html[data-theme='dark'] details.ex-card.c .ex-tag {
+		color: #3b4fd8;
+	}
+	.theme-toggle,
+	.copy-btn {
+		display: none;
+	}
+}
