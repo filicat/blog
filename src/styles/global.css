@@ -132,7 +132,12 @@ article img {
   @apply text-base/7;
 
   code:not(.expressive-code code) {
-    @apply text-sm text-foreground bg-foreground/5 px-2 py-1 rounded-lg whitespace-nowrap;
+    @apply text-sm text-foreground bg-foreground/5 px-2 py-1 rounded-lg;
+    /* 行内 code 不给断行机会时（如 javap 的 flags: (0x1041) ... 这种长 token），
+       会把页面最小内容宽度撑到视口之外，移动端整页被迫横向平移。
+       pre-wrap 保留原有空格、仅在放不下时折行；anywhere 兜住超长不可断 token。 */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   & > *:not(div.expressive-code, img, figure, video, hr, blockquote, aside),
