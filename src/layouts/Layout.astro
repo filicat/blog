@@ -14,9 +14,11 @@ interface Props {
   tags?: string[]
   author?: string
   noindex?: boolean
+  /** 宽版排版：960 栅格的页面（如 /plan）用，正文列放宽到 max-w-5xl */
+  wide?: boolean
 }
 
-const { title, description, tags, author, noindex } = Astro.props
+const { title, description, tags, author, noindex, wide = false } = Astro.props
 // trailingSlash: 'always'，canonical 就用带斜杠的原样 URL
 const pageUrl = new URL(Astro.url.pathname, Astro.site).href
 const pageType = Astro.url.pathname.startsWith('/notes') ? 'article' : 'website'
@@ -160,7 +162,10 @@ let generatedCss: string = cssLines.join('\n')
   </head>
   <body class="w-full h-full m-0 bg-background text-foreground">
     <div
-      class="flex flex-col max-w-3xl min-h-screen border-accent/10 m-auto p-3 sm:py-5 sm:px-6 md:py-10"
+      class:list={[
+        'flex flex-col min-h-screen border-accent/10 m-auto p-3 sm:py-5 sm:px-6 md:py-10',
+        wide ? 'max-w-5xl' : 'max-w-3xl',
+      ]}
     >
       <Header />
       <main class="flex flex-col py-1">

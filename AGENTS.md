@@ -19,17 +19,17 @@
 | `src/pages/index.astro` | 首页：两张入口卡（计划 / 笔记）+ 「最近更新」（最多 3 篇） |
 | `src/pages/notes/index.astro` | 笔记目录页（`/notes/`）：把 `notes-plan.ts` 路线图与实际文件比对，显示章/节/篇、已写/待写与完成度 |
 | `src/pages/notes/[...slug].astro` | 笔记详情路由（`/notes/<章>/<节>/<篇>/`），`data-pagefind-body`，含目录侧栏、相邻笔记、系列、评论区 |
-| `src/pages/plan.astro` | 哑铃减脂计划页（`/plan/`）。正文逐字移植，**版式不要动**，见「约定与红线」 |
+| `src/pages/plan.astro` | 哑铃减脂计划页（`/plan/`）。**主题原生页**：走 `Layout`（`wide`）+ `plan.css`，颜色全部来自构建期生成的 `--plan-*`。见「约定与红线」 |
 | `src/pages/404.astro` | 404 页（产出 `dist/404.html`，它关闭了 Pages 的任意路径回落，**不可删除**）；用 `noindex` |
 | `src/pages/rss.xml.ts` | RSS（`/rss.xml`），样式表 `public/rss.xsl` |
 | `src/pages/robots.txt.ts` | robots.txt，指向 `sitemap-index.xml` |
 | `src/pages/social-cards/[...slug].png.ts` | og:image 社交卡片；`__default.png` 是兜底，其余按笔记 id |
 | `src/pages/tags/[tag]/[...page].astro`、`src/pages/series/[slug].astro` | 标签 / 系列聚合页。笔记没写 `tags`/`series` 时不产生任何页面（当前即是） |
 | `src/pages/giscus/[theme].css.ts` | Giscus 主题样式表。**当前 `giscus: undefined`，该路由只是待用** |
-| `src/layouts/Layout.astro` | 全站 layout（主题版）：`<head>`、canonical/og、配色变量内联、`Header`/`Footer`。props：`title`、`description?`、`tags?`、`author?`、`noindex?` |
-| `src/layouts/BareLayout.astro` | **plan 页专用孤岛 layout**：只引 `plan.css`，不引主题层。见「约定与红线」 |
+| `src/layouts/Layout.astro` | 全站 layout（主题版）：`<head>`、canonical/og、配色变量内联、`Header`/`Footer`。props：`title`、`description?`、`tags?`、`author?`、`noindex?`、`wide?`（容器 `max-w-5xl`，给 plan 的 960 栅格用） |
+| `src/plan-theme.ts` | **plan 页配色的唯一来源**：构建期从每个主题的 31 个 `--theme-*` 解算出一整套 `--plan-*`（面/墨/6 个角色色/英雄区渐变），导出 `planThemeCss()`，由 `plan.astro` 内联。见「约定与红线」 |
 | `src/styles/global.css` | 主题全局样式：Tailwind v4 `@theme`（`--theme-*` → `--color-accent` 等）、字体栈、`@view-transition`、`.prose` 正文排版 |
-| `src/styles/plan.css` | plan 页样式，逐字照搬。**不要改** |
+| `src/styles/plan.css` | plan 页组件样式表（版式 + 角色化颜色别名）。**只准用 `--plan-*`/`--theme-*`，不写字面颜色** |
 | `src/components/` | 主题组件（Header/Footer/PostPreview/PostInfo/TableOfContents/Tags/Search/SelectTheme/…）+ 本站原有的 `ExerciseCard.astro`、`SectionTitle.astro` |
 | `src/plugins/` | remark/rehype 插件：description、reading-time、directive、admonitions、unknown-directives、gemoji、math、pixelated、title-figure |
 | `src/utils.ts` | `getSortedPosts`（过滤 draft）、`dateString`、`resolveThemeColorStyles`、Tags/Series 分组 |
@@ -84,12 +84,13 @@
 
 ## 约定与红线
 
-- **plan 页是孤岛**：`plan.astro` 走 `BareLayout.astro`（只引 `plan.css`），**绝不能让它吃到主题层**——Tailwind preflight（`*{margin:0;padding:0;border:0}` + `html{line-height:1.5}`）会当场毁掉它的排版。新增全局样式时先确认不会漏进 plan 页
-- **`src/styles/plan.css` 不要改**；plan 页 `.wrap` 子树里**一个参与文档流的元素都不能多/少**
-- plan 页的「返回首页」是 `.wrap` **外**的 `position:fixed` 胶囊 `.home-float`（样式在 `BareLayout.astro` 里，含它用的变量与 `.copy-btn` 规则）。**不要把它塞进 `.wrap`**
-- plan 页是**浅色单主题**：深色适配需要再补 130 行变量补丁，收益不值，别顺手加
+- **plan 页是主题原生页**：走 `Layout` + `plan.css`，20 套配色与深浅模式全跟随。颜色**只准来自 `--plan-*`**（`plan-theme.ts` 构建期生成、`plan.astro` 内联），**任何字面颜色（`#hex`、`rgb()`、`white`）都是 bug**。版式（960 栅格、`details/summary`、donut、周历、打印）是手写的，**不要搬去 Tailwind**
+- **`src/plan-theme.ts` 是颜色的唯一来源**：解题器保证每个 `--plan-*` 对**它实际会落到的每个面**都 ≥4.6:1（正文 4.5 AA 留余量）。改它之后必须跑下面「plan 页配色验证」；局部改 `plan.css` 的颜色要同步扩 `plan-theme.ts` 的求解面（新增承载文字的面 → 加进 `inkSurfaces`）
+- **不要依赖 UA 默认样式**：plan 页吃到 Tailwind preflight（`*{margin:0;padding:0;border:0}`、`h1{font-size:inherit;font-weight:inherit}`、`svg{display:block}`），`plan.css` 里凡是 preflight 会抹掉的声明都必须显式写出（标题 `font-weight:700`、`#tgl{font-family:inherit}`、`.ex-fig svg{display:block;margin:0 auto}`）
+- 回首页/切主题走 `Layout` 里的站点 `Header`，plan 页自己**不再有** `.home-float` 胶囊（旧的 `BareLayout` 已删）。plan 页只需要 `wide` 这一个 layout 开关
+- plan 页字体跟随主题（JetBrains Mono + CJK 回退）→ 换行位置与改造前不同，`scrollHeight` 变化（12881→13035 / 21301→21657）属预期，别去对齐旧值
 - **字体：英数等宽 JetBrains Mono Variable，中文回落系统 CJK 黑体**（`global.css` 的 `--default-font-family` / `--default-mono-font-family`）。不引 CJK webfont（5–20MB 或要做子集化），代价是中文不等宽
-- **绝不在 `BareLayout`/`plan.astro` 里改 `body` 字体**：`plan.css` 自带 `body{font-family:…}`，覆盖它会让每个字形度量变化、1154 个 rect 全抖
+- **plan 页不要自己写 `body` 字体**：字体由 `global.css` 的主题字体栈统一决定（JetBrains Mono + CJK 回退），`plan.css` 里只补 preflight 抹掉的继承位（如 `#tgl`、`button`）。改字体栈会让每个字形度量变化、整页 rect 全抖，属全站决策不是 plan 页决策
 - **配色机制**：`site.config.ts` 的 `themes.include` 里每个主题 → `Layout.astro` 构建期用 `resolveThemeColorStyles()` 解析成 31 个 `--theme-*` → 内联 `<style is:inline>` 写成 `:root[data-theme="<id>"] { … }`（**20 个主题的变量会内联进每个页面**，别把 60 个全开）→ `global.css` 的 `@theme` 把它们映射成 Tailwind token（`text-accent`、`bg-foreground/5`、`text-heading1`…）。模式 `select`（读者用顶栏调色板按钮自选，`localStorage` 持久化）/ `single` / `light-dark-auto`
 - 写样式**只用主题 token**（`text-accent`、`bg-foreground/3`、`border-accent/30`、`text-heading2`…），不要另起一套 hex 配色；`overrides` 里可以给某个主题单独改某个 key（值可写颜色，也可写另一个 themeKey）。**改 overrides 前先读下面「配色与对比度」一节**（18 主题 / 205 条对照度的让步，别当垃圾改回去）
 - JS 是渐进增强：关掉 JS 页面必须照常可读（搜索/配色按钮由 custom element 启用，脚本不跑就是 `disabled`）。**不要引入 UI 框架**
@@ -128,11 +129,13 @@
 
 ## 验证方法
 
-- **plan 页保真基线**：headless browser 打开原始文件（`~/文档/deepseek_html_20260914_3c76d1.html`，`file://` URL 需百分号编码）与页面 `/plan/`，对 `.wrap` 子树逐元素比对 `tag.class`、`getBoundingClientRect`、直接文本，再加 `document.documentElement.scrollHeight` 与 `.wrap` 自身 rect。**基线是「零差异」**：`.wrap` 内 **1154 个元素**全等、`scrollHeight` 相等（1365×768 下 3497、390×844 下 3679；随字体环境变化，关键是两页相等）
-  - `.home-float` 故意不算差异：它在 `.wrap` **外**且 `position:fixed`
-  - 跳过 `SCRIPT`/`STYLE`，只比 rect 与文本（Astro 会加 `data-astro-cid-*`）
-  - ⚠️ 视口用 `page.setViewport()`；`browser.open({viewport})` 挂在 CDP 上时不一定生效
-  - ⚠️ 刚打开的标签页（尤其 `file://`）布局可能没落定，差异成片时先隔 300ms 复测；只信 `.wrap` 宽高、`scrollHeight`、字体栈三项都对得上的那次读数
+- **plan 页配色验证**（改了 `plan-theme.ts` / `plan.css` 颜色后必跑。重建 dist 后**必须重新 `page.goto` 再扫描**，否则测的是旧页面）：
+  - **token 层**：解析 `dist/plan/index.html` 里的 `--plan-*`（每个主题有**两段** `:root[data-theme="X"]`——head 的 `--theme-*` 与 body 的 `--plan-*`，要用 `findall` 后按主题合并；用 `dict()` 会互相覆盖），按 WCAG 重算：`ink`/`muted` 对 `[background, surface, panel, panel-2, track, 6 个 *-soft]`、`hero-ink`/`hero-muted` 对 `[hero-fill, hero-chip, hero-stop]`、每个角色的 `-ink` 对 `[5 个面 + 自己的 soft]`、每个角色的 `-on` 对 `[自己的 fill]`。**判定基准是 4.6，全部必须通过**（目标 4.5 AA 留 0.1 余量）
+  - **整页 DOM 扫描**：1365 与 390 两个视口 × 20 主题，遍历每个「只含直接文本」的可见节点，沿祖先链逐层 canvas 合成背景色（`getComputedStyle().color` 对 `oklab(… / α)` 给假数据），正常文本 4.5 / 大字 3.0。**要求 0 违规**；同时记录落在渐变面上的节点数（当前 14 个：英雄区 10 + donut 2 + 2）
+  - **渐变面像素复核**（DOM 合成对渐变只取一个近似值，必须补一次像素检查）：截图这些节点的并集区域，8 级量化直方图取 top-12，`modal = buckets[0]` 作背景算对比度；**排除落在「墨色↔modal」亮度带 ±0.03 内的像素**（抗锯齿/字形像素必在该带内），并**排除与墨色逐通道差 ≤24 的像素**（同一个 `b` 框里混进邻格浅色字形会假报 1.03）。英雄区最差值当前 5.27–10.66
+  - ⚠️ `plan.css` 里的渐变只有 4 处：`.hero`、`.hero::after`（`color-mix(in oklab, var(--plan-hero-ink) var(--plan-hero-glow), transparent)` 光晕）、`.bar i`（装饰条，无文字）、`.bar i.teal`（同上）。光晕强度由解题器解出「墨色叠上光晕后仍 ≥4.6」的最大值（当前 11%–20%）
+  - ⚠️ 改主题后 `setAttribute('data-theme', t)` 要等 ~250ms（160ms 颜色过渡）再读，否则读到上一主题
+- **plan 页版式回归**（改动布局时）：`.wrap` 桌面 960 / 移动 356（=390 − 两倍 12px 容器内边距）、`.wrap *` **1154 个元素**、`.ex-fig svg` **21 个**、`<img>` **0 个**（21 张示意图是内联 SVG，来自 `plan.ts` 的 `figure`，靠 `stroke="currentColor"` + `.ex-fig svg{color:var(--ink)}` 上色，**SVG 里不许写 `fill`/`stroke` 字面色**）
 - **配色**：切主题后 `getComputedStyle(document.body).backgroundColor` 必须变；**沉降 ≥450ms 再读**（160ms 颜色过渡会造假失败，且要 `localStorage['data-theme-hash']` 一致才生效）
 - **搜索（Pagefind）**：
   - `Search.astro` 在生产构建里 `import('@pagefind/default-ui')` → `new PagefindUI({ bundlePath: '/pagefind/', … })`，索引由 `postbuild` 生成，dev 模式无索引
@@ -141,13 +144,14 @@
   - 所以验证搜索必须**自带一个未注入 shim 的浏览器**再走 CDP 附加：
     `/home/lhf/.omp/puppeteer/chrome/linux-*/chrome-linux64/chrome --headless=new --no-sandbox --remote-debugging-port=9333 --user-data-dir=/tmp/cleanprof about:blank`
     然后 `browser.open({ app: { cdp_url: 'http://127.0.0.1:9333' } })`。此浏览器里 Ctrl+K → `泛型` 应得到 `找到 2 个 泛型 的相关结果`（8 个链接，首条 href `/notes/01-Java基础/01-泛型/01-从getClass说起/`），无匹配词应得到 `未找到 … 的相关结果`
-- **路由自检**（`curl -H 'Cache-Control: no-cache'`）：`/` 200、`/notes/` 200、`/notes/01-Java基础/01-泛型/01-从getClass说起/` 200（中文路径百分号编码）、`/plan/` 200 且 **HTML 里不含 Tailwind/主题 CSS 引用**、`/rss.xml` 与 `/robots.txt` 200、`/social-cards/__default.png` 200 且 `content-type: image/png`、`/blog` 301 → `/`、`/foo` 404 且返回自定义 404 页
+- **路由自检**（`curl -H 'Cache-Control: no-cache'`）：`/` 200、`/notes/` 200、`/notes/01-Java基础/01-泛型/01-从getClass说起/` 200（中文路径百分号编码）、`/plan/` 200 且 HTML 里**含**内联的 `--plan-*` 变量与主题 `:root[data-theme=…]` 块、`/rss.xml` 与 `/robots.txt` 200、`/social-cards/__default.png` 200 且 `content-type: image/png`、`/blog` 301 → `/`、`/foo` 404 且返回自定义 404 页
 - ⚠️ `tab.run` 不捕获外层闭包（要 `JSON.stringify` 内插或整个定义在 run 内）；每个 URL 新开 tab 并 await 自己的 run
 - ⚠️ 本地删掉 markdown 后重建，`.astro/` 缓存可能仍含已删条目。`rm -rf .astro dist` 再 build（CI 全新克隆不受影响）
 
 ## 当前状态
 
-- 路由：`/`（首页两张入口卡 + 最近更新）、`/notes/`（目录与进度）、`/notes/<章>/<节>/<篇>/`（详情）、`/plan/`（孤岛）、`/rss.xml`、`/robots.txt`、`/social-cards/*.png`、`/404`
+- 路由：`/`（首页两张入口卡 + 最近更新）、`/notes/`（目录与进度）、`/notes/<章>/<节>/<篇>/`（详情）、`/plan/`（哑铃减脂计划，主题原生页）、`/rss.xml`、`/robots.txt`、`/social-cards/*.png`、`/404`
+- plan 页：20 套配色全跟随（含深浅模式），打印固定浅色；颜色由 `src/plan-theme.ts` 构建期解算，产物 = 每主题一组 `--plan-*` 内联在 `/plan/` 的 HTML 里
 - 笔记：路线图 12 章 / 104 篇，已写 2 篇（`01-Java基础/01-泛型/01-从getClass说起`、`01-Java基础/01-泛型/02-擦除之后`）。进度由 `/notes/` 构建期实时统计
 - 文章（原 `blog` 集合）：0 篇，集合已删
 - 主题：20 套配色，默认 `catppuccin-mocha`，顶栏调色板按钮切换；其中 18 套带对比度 `overrides`（205 条）；搜索走 Pagefind（构建期索引），界面词条中文硬编码；无 JS 时搜索/配色按钮为 `disabled`，正文照常可读

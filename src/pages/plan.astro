@@ -1,14 +1,25 @@
 ---
-import Layout from '../layouts/BareLayout.astro';
+import Layout from '../layouts/Layout.astro';
 import SectionTitle from '../components/SectionTitle.astro';
 import ExerciseCard from '../components/ExerciseCard.astro';
 import { warmup, trainingA, trainingB, cardio } from '../data/plan';
+import { resolveThemeColorStyles } from '../utils';
+import siteConfig from '../site.config';
+import { planThemeCss } from '../plan-theme';
+import '../styles/plan.css';
+
+// 本页的 --plan-* 派生配色：跟随 20 套主题，且每套都按对比度解过（见 plan-theme.ts）
+const planCss = planThemeCss(
+  await resolveThemeColorStyles(siteConfig.themes.include, siteConfig.themes.overrides),
+);
 ---
 
 <Layout
+  wide
   title="哑铃减脂完整计划 · 172cm 72kg 零基础"
   description="男 · 29 岁 · 172cm / 72kg · 零基础 · 极小空间 · 一对可调哑铃（总重 30kg）。含饮食方案、热身、训练 A / B、小空间有氧、一周安排、重量对照与进度追踪。"
 >
+  <style is:inline set:html={planCss}></style>
   <div class="wrap">
     <nav class="toc">
       <a href="#top">顶部</a>
@@ -52,18 +63,18 @@ import { warmup, trainingA, trainingB, cardio } from '../data/plan';
         </div>
         <div class="macro-list">
           <div class="macro">
-            <span class="swatch" style="background:var(--orange)"></span>
-            蛋白质 <span style="color:var(--gray);font-size:12px">31%</span>
+            <span class="swatch" style="background:var(--plan-a-fill)"></span>
+            蛋白质 <span style="color:var(--plan-muted);font-size:12px">31%</span>
             <span class="val">130g</span><span class="gram">×4kcal</span>
           </div>
           <div class="macro">
-            <span class="swatch" style="background:var(--teal)"></span>
-            脂肪 <span style="color:var(--gray);font-size:12px">30%</span>
+            <span class="swatch" style="background:var(--plan-b-fill)"></span>
+            脂肪 <span style="color:var(--plan-muted);font-size:12px">30%</span>
             <span class="val">55g</span><span class="gram">×9kcal</span>
           </div>
           <div class="macro">
-            <span class="swatch" style="background:var(--blue)"></span>
-            碳水 <span style="color:var(--gray);font-size:12px">39%</span>
+            <span class="swatch" style="background:var(--plan-c-fill)"></span>
+            碳水 <span style="color:var(--plan-muted);font-size:12px">39%</span>
             <span class="val">160g</span><span class="gram">×4kcal</span>
           </div>
         </div>
@@ -140,7 +151,7 @@ import { warmup, trainingA, trainingB, cardio } from '../data/plan';
       <summary>
       <h2><span class="dot"></span>有氧怎么练<small>每轮 3 分钟 · 微喘但能说话</small></h2>
       </summary>
-      <p style="font-size:14px;color:#4b5563;margin-bottom:16px;">
+      <p style="font-size:14px;color:var(--plan-ink);margin-bottom:16px;">
         每轮 <b>3 分钟</b>（原地踏步 1 分钟 + 其余 4 个动作各 30 秒）。<br>
         <b>训练日做 3 轮（约 10 分钟）；只练有氧的日子做 6-10 轮（20-30 分钟）。</b><br>
         强度标准：<b>微喘但还能说话</b>。可以拆成几次做，每次 5 分钟也有效。点开下面每个动作看详解。
@@ -209,7 +220,7 @@ import { warmup, trainingA, trainingB, cardio } from '../data/plan';
         <div class="lbl"><span>目标体重</span><b>65-68 kg</b></div>
         <div class="bar"><i class="teal" style="width:100%"></i></div>
       </div>
-      <div style="font-size:14px;color:#4b5563;margin-top:6px;">
+      <div style="font-size:14px;color:var(--plan-ink);margin-top:6px;">
         · 合理速度：<b>每周减 0.5-1kg</b>，一个月 2-4kg<br>
         · <b>腰围比体重更重要</b>，每周量一次<br>
         · 两周不掉秤：主食减 1/4，或每天加 10 分钟有氧
