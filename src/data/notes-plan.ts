@@ -28,7 +28,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '01-Java基础',
 		day: 'D1',
 		stage: 'P0',
-		goal: 'Java 基础、OOP、泛型、反射、注解、异常、String 家族——所有 Java 岗位的隐含必考项，8 家里 3 家明写。',
+		goal: 'Java 基础、OOP、泛型、反射、注解、异常、String 家族：后面所有章节的地基，也是最容易被追到细节的一块。',
 		groups: [
 			{ dir: '01-泛型', planned: ['01-从getClass说起', '02-类型擦除', '03-通配符与PECS', '04-泛型数组与桥方法'] },
 			{ dir: '02-反射', planned: ['01-反射入门', '02-Class对象详解', '03-反射与泛型'] },
@@ -45,7 +45,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '02-设计模式',
 		day: 'D1',
 		stage: 'P0',
-		goal: '面试只考 7 个高频模式：能写代码、能说清解决什么问题、能指出 JDK / Spring 里的现成例子。',
+		goal: '只攻 7 个常用模式：能写代码、能说清它解决什么问题、能指出 JDK / Spring 里的现成例子。',
 		groups: [
 			{
 				dir: '',
@@ -65,7 +65,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '03-集合框架',
 		day: 'D2',
 		stage: 'P0',
-		goal: '集合是初中级岗位第一道筛子：HashMap 扩容与树化、ConcurrentHashMap 线程安全、迭代器 fail-fast 必须能白板画出来。',
+		goal: '集合是最见功底的一块：HashMap 扩容与树化、ConcurrentHashMap 线程安全、迭代器 fail-fast，都要能白板画出来。',
 		groups: [
 			{ dir: '01-List', planned: ['01-ArrayList扩容', '02-LinkedList与ArrayList取舍'] },
 			{ dir: '02-Map', planned: ['01-HashMap原理与扩容', '02-HashMap源码细节', '03-LinkedHashMap与LRU', '04-TreeMap'] },
@@ -77,7 +77,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '04-并发编程',
 		day: 'D3-D4',
 		stage: 'P0',
-		goal: 'JMM 与锁 → 线程池 → 工具类 → 死锁排查。线程池参数与 ThreadLocal 泄漏是最常被追问的两处。',
+		goal: 'JMM 与锁 → 线程池 → 工具类 → 死锁排查。线程池参数与 ThreadLocal 泄漏是最容易被追着问的两处。',
 		groups: [
 			{ dir: '01-内存模型', planned: ['01-JMM与happens-before', '02-volatile'] },
 			{ dir: '02-锁', planned: ['01-synchronized与锁升级', '02-CAS与ABA', '03-AQS与ReentrantLock'] },
@@ -90,7 +90,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '05-Spring',
 		day: 'D5-D6',
 		stage: 'P0',
-		goal: '8 家里 7 家要 SpringCloud。Bean 生命周期、循环依赖三级缓存、事务失效场景、自动配置原理是必答项。',
+		goal: '主线是 Bean 生命周期、循环依赖三级缓存、事务失效场景、自动配置原理；SpringCloud 记清注册配置、网关、限流熔断各自的职责边界。',
 		groups: [
 			{ dir: '01-Spring核心', planned: ['01-Bean生命周期', '02-循环依赖与三级缓存', '03-AOP原理', '04-事务传播行为', '05-事务失效场景'] },
 			{ dir: '02-SpringBoot', planned: ['01-自动配置原理', '02-自定义starter'] },
@@ -104,7 +104,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '06-MySQL',
 		day: 'D7-D8',
 		stage: 'P0',
-		goal: '6 家要 MySQL，3 家明写 SQL 优化。索引与 EXPLAIN 是硬门槛，必须手上有真实优化案例和数据。',
+		goal: '索引与 EXPLAIN 是主战场，要手上有真实的优化案例和数据；事务与锁要能讲清 MVCC 和间隙锁的关系。',
 		groups: [
 			{ dir: '01-索引', planned: ['01-B+树与索引结构', '02-EXPLAIN详解', '03-索引失效场景', '04-回表与覆盖索引'] },
 			{ dir: '02-事务与锁', planned: ['01-隔离级别', '02-MVCC', '03-锁与间隙锁'] },
@@ -116,7 +116,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '07-Redis',
 		day: 'D9',
 		stage: 'P0',
-		goal: '5 家要 Redis。缓存穿透/击穿/雪崩与分布式锁是必背，双写一致性要能说清取舍。',
+		goal: '缓存穿透 / 击穿 / 雪崩与分布式锁是常考点，双写一致性要能说清取舍。',
 		groups: [
 			{
 				dir: '',
@@ -137,7 +137,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '08-Kafka与Linux',
 		day: 'D10',
 		stage: 'P0',
-		goal: '5 家要 MQ、4 家要 Linux。Kafka 讲可靠性、顺序性与积压处置；Linux 会直接考线上排障命令。',
+		goal: 'Kafka 讲清可靠性、顺序性与积压处置；Linux 练到能直接上手排障（CPU、内存、日志）。',
 		groups: [
 			{ dir: '01-Kafka', planned: ['01-架构与核心概念', '02-为什么快', '03-acks与ISR', '04-重复消费与顺序性', '05-消息积压处置'] },
 			{ dir: '02-Linux', planned: ['01-常用命令速查', '02-CPU飙高排查', '03-OOM与内存排查'] },
@@ -147,7 +147,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '09-MyBatis与分布式事务',
 		day: 'D11',
 		stage: 'P1',
-		goal: '4 家要 MyBatis；中电金信明写分布式事务与幂等，金融岗（4 家）几乎必问。',
+		goal: 'MyBatis 要懂执行流程与一二级缓存；分布式事务能对比方案、讲清 AT 模式和幂等设计。',
 		groups: [
 			{ dir: '01-MyBatis', planned: ['01-执行流程', '02-占位符与SQL注入', '03-一二级缓存', '04-插件原理'] },
 			{ dir: '02-分布式事务', planned: ['01-方案对比', '02-Seata-AT', '03-幂等设计'] },
@@ -157,7 +157,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '10-JVM',
 		day: 'D12',
 		stage: 'P1',
-		goal: 'TEKsystems 明确要 JVM 基础。重点不是背书，而是能独立走完一次「Full GC 频繁」的排查。',
+		goal: '重点不是背参数，而是能独立走完一次「Full GC 频繁」或「OOM」的排查。',
 		groups: [
 			{
 				dir: '',
@@ -176,7 +176,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '11-Docker与K8s',
 		day: 'D13',
 		stage: 'P1',
-		goal: '软通动力（外包汇丰）要 K8s/Docker，TEKsystems 列为优先。会写 Dockerfile、会看 Pod 日志即可。',
+		goal: '会写 Dockerfile、会看 Pod 日志、能处理一次滚动更新失败就够用。',
 		groups: [
 			{
 				dir: '',
@@ -188,7 +188,7 @@ export const noteChapters: NoteChapter[] = [
 		dir: '12-Git与Maven',
 		day: 'D14',
 		stage: 'P1',
-		goal: '德科、TEKsystems、京北方都明写 Git/Maven。撤销与恢复、依赖调解是高频考点。',
+		goal: '撤销与恢复、依赖调解是日常踩坑最多、也最常被问的两块。',
 		groups: [
 			{ dir: '', planned: ['01-Git撤销与恢复', '02-merge与rebase', '03-Maven依赖调解'] },
 		],
